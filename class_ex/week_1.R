@@ -13,15 +13,26 @@ uis <- read.delim("C:/Users/GRA/Desktop/Misc/R Working Directory/School/survival
 whas500 <- read.delim("C:/Users/GRA/Desktop/Misc/R Working Directory/School/survival_analysis/data/whas500.txt")
 
 
-#survival curve----
+#survival curves ----
 
 #create survival object
-lungsurv <- Surv(lung$time, lung$status-1)
+lungsurv <- Surv(lung$time, lung$status-1) # originally coded as 1,2. This recodes as 0,1 where 1=event
 
 #fit a line using survival object
 fit <- survfit(lungsurv~1)
 
 #plot the survival curve
-plot(fit,  conf.int= F, mark.time=T, 
+plot(fit,  conf.int= T, mark.time=F, 
      main = "Survival Curve for Lung Cancer Data", 
      xlab = "Time", ylab = "Survival Rate")
+
+#2nd example using divorce data
+divsurv <- Surv(divorce$Time, divorce$Divorce)
+fit2 <- survfit(divsurv~1)
+plot(fit2, conf.int= T, mark.time=F, 
+     main = "Survival Curve for Divorce Data", 
+     xlab = "Time", ylab = "Survival Rate",
+     ylim=c(.5,1))
+
+
+#life table example ----
