@@ -1,0 +1,51 @@
+cont.ep,season,episode,name,time,status
+1,1,1,Waymar Royce,00:05:52,1
+2,1,2,Assassin,00:31:27,1
+3,1,3,None,00:00:00,0
+4,1,4,Ser Hugh,00:41:47,1
+5,1,5,Wyl,00:51:14,1
+6,1,6,Wallen,00:11:23,1
+7,1,7,Wine seller,00:51:53,1
+8,1,8,Stableboy,00:07:02,1
+9,1,9,Qotho,00:34:02,1
+10,1,10,Khal Drogo,00:33:09,1
+11,2,1,Maester Cressen,00:30:49,1
+12,2,2,Rakharo,00:15:52,1
+13,2,3,Yoren,00:48:22,1
+14,2,4,Rennick,00:03:39,1
+15,2,5,Renly Baratheon,00:03:38,1
+16,2,6,Rodrik Cassel,00:09:35,1
+17,2,7,Alton Lannister,00:38:38,1
+18,2,8,Stonesnake,00:07:24,1
+19,2,9,Matthos Seaworth,00:25:09,1
+20,2,10,Tom,00:15:21,1
+21,3,1,None,00:00:00,0
+22,3,2,Hoster Tully,00:05:31,1
+23,3,3,Master Torturer,00:45:14,1
+24,3,4,Kraznys mo Nakloz,00:49:00,1
+25,3,5,Willen Lannister,00:20:55,1
+26,3,6,Ros,00:48:40,1
+27,3,7,None,00:00:00,0
+28,3,8,Mero,00:45:11,1
+29,3,9,Old Man,00:25:04,1
+30,3,10,Frey Soldier,00:40:00,1
+31,4,1,lowell,00:55:00,1
+32,4,2,Tansy,00:03:59,1
+33,4,3,Dontos Hollar,00:04:46,1
+34,4,4,Bannen,00:24:00,1
+35,4,5,Locke,00:44:46,1
+36,4,6,None,00:00:00,0
+37,4,7,Dying Man,00:08:57,1
+38,4,8,Caster,00:24:00,1
+39,4,9,Pypar,00:29:44,1
+40,4,10,Zalla,00:23:55,1
+41,5,1,White Rat,00:15:20,1
+42,5,2,Son of Harpy,00:46:30,1
+43,5,3,Janos Slynt,00:38:58,1
+44,5,4,Lead Dornish guard,00:34:17,1
+45,5,5,Great Master,00:04:59,1
+46,5,6,Ghita,00:13:20,1
+47,5,7,Master Aemon,00:09:45,1
+48,5,8,Lord of Bones,00:32:50,1
+49,5,9,Shrine Baratheon,00:32:28,1
+50,5,10,Selyse Baratheon,00:03:35,1
