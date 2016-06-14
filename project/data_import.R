@@ -1,5 +1,6 @@
-#getting data
+#loading data and formatting
 
+#packages
 library(dplyr)
 library(ggplot2)
 library(ggthemes)
@@ -45,5 +46,53 @@ death.surv <- Surv(deaths$time, deaths$murdered)
 fit <- survfit(death.surv~1)
 
 plot(fit, conf.int = T, mark.time = T, 
-     xlab = "Time (Miniutes)", ylab = "Survivl Probability", 
+     xlab = "Time (Miniutes)", ylab = "Survival Probability", 
      main = "Survivial Curve: Time Until Murdered \n (Seasons 1-5 of Game of Thrones)")
+
+#add lines for different covariates
+ep1.surv <- Surv(subset(deaths$time, deaths$episode == 1), subset(deaths$murdered, deaths$episode == 1))
+fit.ep1 <- survfit(ep1.surv~1)
+
+ep2.surv <- Surv(subset(deaths$time, deaths$episode == 2), subset(deaths$murdered, deaths$episode == 2))
+fit.ep2 <- survfit(ep2.surv~1)
+
+ep3.surv <- Surv(subset(deaths$time, deaths$episode == 3), subset(deaths$murdered, deaths$episode == 3))
+fit.ep3 <- survfit(ep3.surv~1)
+
+ep4.surv <- Surv(subset(deaths$time, deaths$episode == 4), subset(deaths$murdered, deaths$episode == 4))
+fit.ep4 <- survfit(ep4.surv~1)
+
+ep5.surv <- Surv(subset(deaths$time, deaths$episode == 5), subset(deaths$murdered, deaths$episode == 5))
+fit.ep5 <- survfit(ep5.surv~1)
+
+ep6.surv <- Surv(subset(deaths$time, deaths$episode == 6), subset(deaths$murdered, deaths$episode == 6))
+fit.ep6 <- survfit(ep6.surv~1)
+
+ep7.surv <- Surv(subset(deaths$time, deaths$episode == 7), subset(deaths$murdered, deaths$episode == 7))
+fit.ep7 <- survfit(ep7.surv~1)
+
+ep8.surv <- Surv(subset(deaths$time, deaths$episode == 8), subset(deaths$murdered, deaths$episode == 8))
+fit.ep8 <- survfit(ep8.surv~1)
+
+ep9.surv <- Surv(subset(deaths$time, deaths$episode == 9), subset(deaths$murdered, deaths$episode == 9))
+fit.ep9 <- survfit(ep9.surv~1)
+
+ep10.surv <- Surv(subset(deaths$time, deaths$episode == 10), subset(deaths$murdered, deaths$episode == 10))
+fit.ep10 <- survfit(ep10.surv~1)
+
+plot(fit.ep1, conf.int = F, mark.time = F, 
+     xlab = "Time (Miniutes)", ylab = "Survival Probability", 
+     main = "Survivial Curve: Time Until Murdered \n (Episodes 1-5 of Game of Thrones)")
+
+lines(fit.ep2, col = "blue", conf.int = F, mark.time = F)
+lines(fit.ep3, col = "red", conf.int = F, mark.time = F)
+lines(fit.ep4, col = "green", conf.int = F, mark.time = F)
+lines(fit.ep5, col = "purple", conf.int = F, mark.time = F)
+lines(fit.ep6, col = "orange", conf.int = F, mark.time = F)
+lines(fit.ep7, col = "brown", conf.int = F, mark.time = F)
+lines(fit.ep8, col = "blue", conf.int = F, mark.time = F)
+lines(fit.ep9, col = "red", conf.int = F, mark.time = F)
+lines(fit.ep10, col = "green", conf.int = F, mark.time = F)
+
+
+
