@@ -1,51 +1,142 @@
-cont.ep,season,episode,name,time,status
-1,1,1,Waymar Royce,00:05:52,1
-2,1,2,Assassin,00:31:27,1
-3,1,3,None,00:00:00,0
-4,1,4,Ser Hugh,00:41:47,1
-5,1,5,Wyl,00:51:14,1
-6,1,6,Wallen,00:11:23,1
-7,1,7,Wine seller,00:51:53,1
-8,1,8,Stableboy,00:07:02,1
-9,1,9,Qotho,00:34:02,1
-10,1,10,Khal Drogo,00:33:09,1
-11,2,1,Maester Cressen,00:30:49,1
-12,2,2,Rakharo,00:15:52,1
-13,2,3,Yoren,00:48:22,1
-14,2,4,Rennick,00:03:39,1
-15,2,5,Renly Baratheon,00:03:38,1
-16,2,6,Rodrik Cassel,00:09:35,1
-17,2,7,Alton Lannister,00:38:38,1
-18,2,8,Stonesnake,00:07:24,1
-19,2,9,Matthos Seaworth,00:25:09,1
-20,2,10,Tom,00:15:21,1
-21,3,1,None,00:00:00,0
-22,3,2,Hoster Tully,00:05:31,1
-23,3,3,Master Torturer,00:45:14,1
-24,3,4,Kraznys mo Nakloz,00:49:00,1
-25,3,5,Willen Lannister,00:20:55,1
-26,3,6,Ros,00:48:40,1
-27,3,7,None,00:00:00,0
-28,3,8,Mero,00:45:11,1
-29,3,9,Old Man,00:25:04,1
-30,3,10,Frey Soldier,00:40:00,1
-31,4,1,lowell,00:55:00,1
-32,4,2,Tansy,00:03:59,1
-33,4,3,Dontos Hollar,00:04:46,1
-34,4,4,Bannen,00:24:00,1
-35,4,5,Locke,00:44:46,1
-36,4,6,None,00:00:00,0
-37,4,7,Dying Man,00:08:57,1
-38,4,8,Caster,00:24:00,1
-39,4,9,Pypar,00:29:44,1
-40,4,10,Zalla,00:23:55,1
-41,5,1,White Rat,00:15:20,1
-42,5,2,Son of Harpy,00:46:30,1
-43,5,3,Janos Slynt,00:38:58,1
-44,5,4,Lead Dornish guard,00:34:17,1
-45,5,5,Great Master,00:04:59,1
-46,5,6,Ghita,00:13:20,1
-47,5,7,Master Aemon,00:09:45,1
-48,5,8,Lord of Bones,00:32:50,1
-49,5,9,Shrine Baratheon,00:32:28,1
-50,5,10,Selyse Baratheon,00:03:35,1
+ep.count,season,episode,name,time,killed by,murdered,house,type
+1,1,1,Waymar Royce,5:52,white walker,1,Night's Watch,minor
+1,1,1,Gared,6:58,white walker,1,Night's Watch,minor
+1,1,1,Will,13:44,executed by ned stark,1,Night's Watch,minor
+1,1,1,Jon Arryn,18:34,poisoned by lysa,1,House Arryn,minor
+2,1,2,Assassin,31:27,bran's wolf,1,None/unknown,minor
+2,1,2,Mycah,4:37,the hound,1,House Stark,minor
+4,1,4,Ser Hugh,47:41,the mountain,1,House Arryn,minor
+5,1,5,Kurleket,11:56,hill tribesmen,1,House Tully,minor
+5,1,5,Willis Wode,12:31,hill tribesmen,1,House Stark,minor
+5,1,5,Wyl,51:14,lannister guardsmen,1,House Stark,minor
+5,1,5,Heward,51:14,lannister guardsmen,1,House Stark,minor
+5,1,5,Jory Cassel,51:30,jamie lannister,1,House Stark,supporting
+6,1,6,Wallen,11:23,rob stark,1,Free Folk,minor
+6,1,6,Stiv,12:05,kill by theon greyjoy,1,Night's Watch,minor
+6,1,6,Vardis Egen,38:19,bronn,1,House Arryn,minor
+6,1,6,Viserys Targaryen ,51:04,khal drogo,1,House Targaryen,main
+7,1,7,Wine seller,51:53,dragged behind a horse,1,Varys,minor
+7,1,7,Robert Baratheon,52:09,a boar,0,House Baratheon,main
+8,1,8,Vayon Poole,2:25,house lannister men,1,House Stark,minor
+8,1,8,Mordane,3:12,house lannister men,1,House Stark,minor
+8,1,8,Syrio Forel,5:46,house lannister men,1,House Stark,minor
+8,1,8,Stableboy,7:02,arya,1,None/unknown,minor
+8,1,8,Mago,30:52,khal drogo,1,Dothraki,minor
+8,1,8,Othor,25:58,burned by jon snow,1,Night's Watch,minor
+9,1,9,Qotho,34:02,jorah mormont,1,Dothraki,supporting
+9,1,9,Eddard Stark,54:56,executed by ilyn payne,1,House Stark,main
+10,1,10,Khal Drogo,33:39,smothered by daenerys,1,Dothraki,main
+10,1,10,Mirri Maz Duur,48:12,burned alive by by daenerys,1,None/unknown,minor
+11,2,1,Maester Cressen,30:49,suicide by poison,0,Order of Maesters,minor
+11,2,1,Barra,49:21,janos slynt,1,House Baratheon,minor
+12,2,2,Rakharo,15:52,dothrakis,1,House Targaryen,supporting
+13,2,3,Yoren,48:22,amory lorch,1,Night's Watch,supporting
+13,2,3,Lommy,50:13,polliver,1,None/unknown,supporting
+14,2,4,Rennick,3:39,robb stark's wolf,1,House Lannister,minor
+14,2,4,Lannister guardsmen,3:39,robb stark's wolf,1,House Lannister,minor
+14,2,4,Tortured Prisoner,28:13,tortured to death,1,None/unknown,minor
+15,2,5,Renly Baratheon,3:38,shadow creature,1,House Baratheon,main
+15,2,5,Emmon Cuy,4:04,brienne of tarth,1,House Cuy,minor
+15,2,5,Robar Royce,4:12,brienne of tarth,1,House Baratheon,minor
+15,2,5,The Tickler,52:10,jaqen h'ghar,1,House Clegane,minor
+16,2,6,Rodrik Cassel,9:35,theon greyjoy,1,House Stark,supporting
+16,2,6,The High Septon,26:25,rioters,1,The Faith of the Seven,minor
+16,2,6,Armory Lorch,38:41,jagen h'ghar,1,House Lannister,minor
+16,2,6,Drennan ,50:19,osha,1,House Greyjoy,minor
+16,2,6,Irri,52:00,xaro xhoan daxos,1,House Targaryen,supporting
+17,2,7,Alton Lannister,38:38,jamie lannister,1,House Lannister,minor
+17,2,7,Torrhen Karstark,39:07,jamie lannister,1,House Stark,minor
+17,2,7,Eleven of the Thirteen,42:41,pyat pree,1,None/unknown,minor
+17,2,7,Billy,53:27,theon greyjoy,1,House Stark,minor
+17,2,7,Jack,53:27,theon greyjoy,1,House Stark,minor
+18,2,8,Stonesnake,7:24,wildlings,1,Night's Watch,minor
+18,2,8,Harker,7:24,wildlings,1,Night's Watch,minor
+18,2,8,Borba ,7:24,wildlings,1,Night's Watch,minor
+19,2,9,Matthos Seaworth,25:09,wildfire explosion,1,House Seaworth,supporting
+19,2,9,Mandon Moore,49:47,podrik,1,House Moore,minor
+20,2,10,Tom,15:51,brienne of tarth,1,House Stark,minor
+20,2,10,Maester Luwin,28:31,dagmer,1,Order of Maesters,supporting
+20,2,10,Pyat Pree,51:08,daenerys' dragons,1,None/unknown,supporting
+20,2,10,Qhorin,53:26,jon snow,1,Night's Watch,supporting
+20,2,10,Doreah,56:46,locked in xaro xhoan daxos' vault,1,House Targaryen,supporting
+20,2,10,Xaro Xhoan Daxos,56:46,locked in his vault,1,None/unknown,supporting
+22,3,2,Hoster Tully,5:31,old age,0,House Tully,minor
+23,3,3,Master Torturer,45:14,ramsay snow,1,House Bolton,minor
+24,3,4,Bannen,34:51,died of a broken foot and being starved,1,Night's Watch,minor
+24,3,4,Caster,38:39,karl tanner,1,None/unknown,supporting
+24,3,4,Jeor Mormont,39:03,rast,1,Night's Watch,supporting
+24,3,4,Kraznys mo Nakloz,49:00,dragon,1,None/unknown,minor
+25,3,5,Willen Lannister,20:55,richard karstark,1,House Lannister,minor
+25,3,5,Martyn Lannister,20:58,richard karstark,1,House Lannister,minor
+25,3,5,Richard Karstark,25:09,executed by robb stark,1,House Stark,supporting
+26,3,6,Ros,48:40,joffrey,1,Varys,supporting
+28,3,8,Mero,45:11,daario naharis,1,None/unknown,minor
+28,3,8,Prendahl na Ghezn,45:11,daario naharis,1,None/unknown,minor
+28,3,8,White Walker,54:25,white walker,1,White Walkers,minor
+29,3,9,Old Man,25:04,ygritte,1,Night's Watch,minor
+29,3,9,Orell,26:20,jon snow,1,Free Folk,supporting
+29,3,9,Talisa Stark,44:15,lorthar frey,1,House Stark,main
+29,3,9,Robb Stark,48:37,roose bolton,1,House Stark,main
+29,3,9,Joyeuse Erenford,48:57,catelyn stark,1,House Tully,minor
+29,3,9,Catelyn Stark,49:05,walder rivers,1,House Stark,main
+30,3,10,Frey Soldier,40:00,arya stark,1,House Frey,minor
+31,4,1,lowell,55:00,the hound,1,House Lannister,minor
+31,4,1,Polliver,55:30,arya stark,1,House Lannister,minor
+32,4,2,Tansy,3:59,ramsey's dogs,1,House Bolton,minor
+32,4,2,Axell Florent,20:10,burned alive by melisandre,1,House Florent,minor
+32,4,2,Joffrey Baratheon,47:46,poisoned by olenna tyrell,1,House Baratheon,main
+33,4,3,Dontos Hollar,4:46,petyr baelish's men,1,House Stark,supporting
+33,4,3,Guymon,43:40,ygritte,1,None/unknown,minor
+33,4,3,Olly's Mother,43:50,styr,1,None/unknown,minor
+33,4,3,Oznak zo Pahl,52:30,daario naharis,1,None/unknown,minor
+34,4,4,Great Master,7:45,killed slaves in uprising,1,Great Masters,minor
+35,4,5,Locke,44:46,killed bran stark while warging into hodor,1,House Bolton,supporting
+35,4,5,Karl Tanner,47:51,jon snow,1,Night's Watch,supporting
+35,4,5,Rast,49:47,jon snow's wolf,1,Night's Watch,supporting
+37,4,7,Dying Man,8:57,mercy the hound,1,None/unknown,minor
+37,4,7,Biter,9:39,the hound,1,House Lannister,minor
+37,4,7,Rorge,10:29,arya stark,1,House Lannister,minor
+37,4,7,Lysa Arryn,49:19,pushed through the moon door by littlefinger,1,House Tully,supporting
+38,4,8,Mole's Town whore,5:08,ygritte,1,None/unknown,minor
+38,4,8,Ralf Kenning,16:41,adrack humble,1,House Greyjoy,minor
+38,4,8,Adrack Humble,17:07,ramsay snow's men,1,House Greyjoy,minor
+38,4,8,Oberyn Martell,50:05,the mountain,1,House Martell,main
+39,4,9,Pypar,29:44,ygritte,1,Night's Watch,supporting
+39,4,9,Thenn warg,34:00,samwell tarly,1,Thenn,supporting
+39,4,9,Dongo,35:44,black brothers,1,Free Folk,minor
+39,4,9,Smitty,36:02,fell of the wall,1,Night's Watch,minor
+39,4,9,Styr,41:12,jon snow,1,Free Folk,supporting
+39,4,9,Ygritte,41:39,olly,1,Free Folk,main
+39,4,9,Mag Mar Tun Doh Weg,47:02,grenn and 5 other black brothers,1,Free Folk,minor
+39,4,9,Grenn,47:02,mag mar tun doh weg,1,Night's Watch,supporting
+39,4,9,Cooper,47:02,mag mar tun doh weg,1,Night's Watch,minor
+39,4,9,Done Hill,47:02,mag mar tun doh weg,1,Night's Watch,minor
+40,4,10,Zalla,23:25,dragon,1,None/unknown,minor
+40,4,10,Jojen Reed,35:56,wight,1,House Stark,supporting
+40,4,10,Sandor Clegane,51:04,critically wounded by brienne of tarth,1,None/unknown,main
+40,4,10,Shae,54:57,tyrion lannister,1,House Lannister,main
+40,4,10,Tywin Lannister,58:45,tyrion lannister,1,House Lannister,main
+41,5,1,White Rat,15:20,a member of the sons of the harpy,1,House Targaryen,minor
+41,5,1,Mance Rayder,49:18,mercy jon snow,1,Free Folk,supporting
+42,5,2,Son of Harpy,46:30,mossador,1,House Targaryen,minor
+42,5,2,Mossador,50:24,executed by daario naharis,1,House Targaryen,supporting
+43,5,3,Janos Slynt,38:58,executed by jon snow,1,House Baratheon,supporting
+44,5,4,Lead Dornish guard,34:17,bronn,1,House Martell,minor
+44,5,4,Merchant captain,38:42,obara sand,1,None/unknown,minor
+44,5,4,Ser Barristan Selmy,47:46,sons of harpy,1,Queensguard,supporting
+45,5,5,Great Master,4:59,dragon,1,Great Masters,minor
+46,5,6,Ghita,13:20,posioned with water from house of black and white by arya,1,None/unknown,minor
+47,5,7,Master Aemon,9:45,died of natural causes,0,Night's Watch,supporting
+47,5,7,Old Woman,13:42,ramsay bolton,1,House Stark,minor
+48,5,8,Lord of Bones,32:50,tormund,1,Free Folk,supporting
+48,5,8,Loboda,50:16,white walker,1,Mance Rayder,minor
+48,5,8,White Walker,51:00,jon snow,1,White Walkers,minor
+48,5,8,Karsi,52:58,a pack of child-wights,1,Free Folk,minor
+49,5,9,Shrine Baratheon,32:28,burned alive as a sacrifice by melisandre,1,House Baratheon,supporting
+49,5,9,Hizdahr zo Loraq,45:03,son of harpy,1,House Targaryen,supporting
+50,5,10,Selyse Baratheon,3:35,suicide by hanging,0,House Baratheon,supporting
+50,5,10,Stannis Baratheon,15:23,brienne of tarth,1,House Baratheon,main
+50,5,10,Myranda,18:33,theon greyjoy,1,House Bolton,supporting
+50,5,10,Meryn Trant,21:10,arya stark,1,House Baratheon,supporting
+50,5,10,Myrcella Baratheon,29:25,poisoned by ellaria sand,1,House Baratheon,supporting
+50,5,10,Jon Snow,56:20,black brothers,1,Night's Watch,main
