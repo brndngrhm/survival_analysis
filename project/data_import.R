@@ -1,6 +1,6 @@
 #loading data and formatting
 
-#packages
+#packages ----
 library(dplyr)
 library(ggplot2)
 library(ggthemes)
@@ -8,22 +8,150 @@ library(rvest)
 library(survival)
 library(nlme)
 library(lubridate)
+library(ggsurv)
 
-#load & format data 
+#ggsurv function ----
+ggsurv <- function(s, CI = 'def', plot.cens = T, surv.col = 'gg.def',
+                   cens.col = 'red', lty.est = 1, lty.ci = 2,
+                   cens.shape = 3, back.white = F, xlab = 'Time',
+                   ylab = 'Survival', main = ''){
+  
+  library(ggplot2)
+  strata <- ifelse(is.null(s$strata) ==T, 1, length(s$strata))
+  stopifnot(length(surv.col) == 1 | length(surv.col) == strata)
+  stopifnot(length(lty.est) == 1 | length(lty.est) == strata)
+  
+  ggsurv.s <- function(s, CI = 'def', plot.cens = T, surv.col = 'gg.def',
+                       cens.col = 'red', lty.est = 1, lty.ci = 2,
+                       cens.shape = 3, back.white = F, xlab = 'Time',
+                       ylab = 'Survival', main = ''){
+    
+    dat <- data.frame(time = c(0, s$time),
+                      surv = c(1, s$surv),
+                      up = c(1, s$upper),
+                      low = c(1, s$lower),
+                      cens = c(0, s$n.censor))
+    dat.cens <- subset(dat, cens != 0)
+    
+    col <- ifelse(surv.col == 'gg.def', 'black', surv.col)
+    
+    pl <- ggplot(dat, aes(x = time, y = surv)) +
+      xlab(xlab) + ylab(ylab) + ggtitle(main) +
+      geom_step(col = col, lty = lty.est)
+    
+    pl <- if(CI == T | CI == 'def') {
+      pl + geom_step(aes(y = up), color = col, lty = lty.ci) +
+        geom_step(aes(y = low), color = col, lty = lty.ci)
+    } else (pl)
+    
+    pl <- if(plot.cens == T & length(dat.cens) > 0){
+      pl + geom_point(data = dat.cens, aes(y = surv), shape = cens.shape,
+                      col = cens.col)
+    } else if (plot.cens == T & length(dat.cens) == 0){
+      stop ('There are no censored observations')
+    } else(pl)
+    
+    pl <- if(back.white == T) {pl + theme_bw()
+    } else (pl)
+    pl
+  }
+  
+  ggsurv.m <- function(s, CI = 'def', plot.cens = T, surv.col = 'gg.def',
+                       cens.col = 'red', lty.est = 1, lty.ci = 2,
+                       cens.shape = 3, back.white = F, xlab = 'Time',
+                       ylab = 'Survival', main = '') {
+    n <- s$strata
+    
+    groups <- factor(unlist(strsplit(names
+                                     (s$strata), '='))[seq(2, 2*strata, by = 2)])
+    gr.name <-  unlist(strsplit(names(s$strata), '='))[1]
+    gr.df <- vector('list', strata)
+    ind <- vector('list', strata)
+    n.ind <- c(0,n); n.ind <- cumsum(n.ind)
+    for(i in 1:strata) ind[[i]] <- (n.ind[i]+1):n.ind[i+1]
+    
+    for(i in 1:strata){
+      gr.df[[i]] <- data.frame(
+        time = c(0, s$time[ ind[[i]] ]),
+        surv = c(1, s$surv[ ind[[i]] ]),
+        up = c(1, s$upper[ ind[[i]] ]),
+        low = c(1, s$lower[ ind[[i]] ]),
+        cens = c(0, s$n.censor[ ind[[i]] ]),
+        group = rep(groups[i], n[i] + 1))
+    }
+    
+    dat <- do.call(rbind, gr.df)
+    dat.cens <- subset(dat, cens != 0)
+    
+    pl <- ggplot(dat, aes(x = time, y = surv, group = group)) +
+      xlab(xlab) + ylab(ylab) + ggtitle(main) +
+      geom_step(aes(col = group, lty = group))
+    
+    col <- if(length(surv.col == 1)){
+      scale_colour_manual(name = gr.name, values = rep(surv.col, strata))
+    } else{
+      scale_colour_manual(name = gr.name, values = surv.col)
+    }
+    
+    pl <- if(surv.col[1] != 'gg.def'){
+      pl + col
+    } else {pl + scale_colour_discrete(name = gr.name)}
+    
+    line <- if(length(lty.est) == 1){
+      scale_linetype_manual(name = gr.name, values = rep(lty.est, strata))
+    } else {scale_linetype_manual(name = gr.name, values = lty.est)}
+    
+    pl <- pl + line
+    
+    pl <- if(CI == T) {
+      if(length(surv.col) > 1 && length(lty.est) > 1){
+        stop('Either surv.col or lty.est should be of length 1 in order
+             to plot 95% CI with multiple strata')
+      }else if((length(surv.col) > 1 | surv.col == 'gg.def')[1]){
+        pl + geom_step(aes(y = up, color = group), lty = lty.ci) +
+          geom_step(aes(y = low, color = group), lty = lty.ci)
+      } else{pl +  geom_step(aes(y = up, lty = group), col = surv.col) +
+          geom_step(aes(y = low,lty = group), col = surv.col)}
+    } else {pl}
+    
+    
+    pl <- if(plot.cens == T & length(dat.cens) > 0){
+      pl + geom_point(data = dat.cens, aes(y = surv), shape = cens.shape,
+                      col = cens.col)
+    } else if (plot.cens == T & length(dat.cens) == 0){
+      stop ('There are no censored observations')
+    } else(pl)
+    
+    pl <- if(back.white == T) {pl + theme_bw()
+    } else (pl)
+    pl
+  }
+  pl <- if(strata == 1) {ggsurv.s(s, CI , plot.cens, surv.col ,
+                                  cens.col, lty.est, lty.ci,
+                                  cens.shape, back.white, xlab,
+                                  ylab, main)
+  } else {ggsurv.m(s, CI, plot.cens, surv.col ,
+                   cens.col, lty.est, lty.ci,
+                   cens.shape, back.white, xlab,
+                   ylab, main)}
+  pl
+}
+
+#load & format data ----
 deaths <- read.csv("C:/Users/GRA/Desktop/Misc/R Working Directory/School/survival_analysis/project/deaths.csv", 
                    stringsAsFactors = F)
 deaths$time <- ms(deaths$time)
 deaths$min <- minute(deaths$time)
 deaths$sec <- second(deaths$time)
 
-#organize into subsets
+#organize into subsets ----
 ep <- deaths %>% group_by(episode) %>% summarise(total = sum(murdered))
 season <- deaths %>% group_by(season) %>% summarise(total = sum(murdered))
 house <- deaths %>% group_by(house) %>% summarise(total = sum(murdered)) %>% ungroup() %>% arrange(desc(total))
 type <-  deaths %>% group_by(type) %>% summarise(total = sum(murdered)) %>% ungroup() %>% arrange(desc(total))
 censored <- deaths %>% group_by(murdered) %>% summarise(total = n()) %>% ungroup() %>% arrange(desc(total))
 
-#summary plots
+#summary plots ----
 (season.plot <- ggplot(season, aes(x=as.factor(season), y=total)) + 
   geom_bar(stat="identity") + theme_hc()+ 
   labs(x="\n Season", y="", title="Total Murders by Season"))
@@ -40,59 +168,21 @@ censored <- deaths %>% group_by(murdered) %>% summarise(total = n()) %>% ungroup
   geom_bar(stat="identity")+ theme_hc() + 
   labs(x="\nCharacter Role", y="", title="Total Murders by Role"))
 
-#plot simple survival curve
+
+#plot survival curves ----
 death.surv <- Surv(deaths$time, deaths$murdered)
+fit <- survfit(death.surv~1, data=deaths)
+ggsurv(fit) + labs(x="Time (Minutes)", title = "Survival Curve for GoT Murders (Seasons 1-5)")
 
-fit <- survfit(death.surv~1)
+fit.season <- survfit(death.surv~season, data=deaths)
+ggsurv(fit.season) + labs(x="Time (Minutes)", title = "Survival Curves for GoT Murders by Season")
 
-plot(fit, conf.int = T, mark.time = T, 
-     xlab = "Time (Miniutes)", ylab = "Survival Probability", 
-     main = "Survivial Curve: Time Until Murdered \n (Seasons 1-5 of Game of Thrones)")
+fit.ep <- survfit(death.surv~episode, data=deaths)
+ggsurv(fit.ep) + labs(x="Time (Minutes)", title = "Survival Curves for GoT Murders by Episode Number")
 
-#add lines for different covariates
-ep1.surv <- Surv(subset(deaths$time, deaths$episode == 1), subset(deaths$murdered, deaths$episode == 1))
-fit.ep1 <- survfit(ep1.surv~1)
+fit.type <- survfit(death.surv~type, data=deaths)
+ggsurv(fit.type) + labs(x="Time (Minutes)", title = "Survival Curves for GoT Murders by Character Type")
 
-ep2.surv <- Surv(subset(deaths$time, deaths$episode == 2), subset(deaths$murdered, deaths$episode == 2))
-fit.ep2 <- survfit(ep2.surv~1)
-
-ep3.surv <- Surv(subset(deaths$time, deaths$episode == 3), subset(deaths$murdered, deaths$episode == 3))
-fit.ep3 <- survfit(ep3.surv~1)
-
-ep4.surv <- Surv(subset(deaths$time, deaths$episode == 4), subset(deaths$murdered, deaths$episode == 4))
-fit.ep4 <- survfit(ep4.surv~1)
-
-ep5.surv <- Surv(subset(deaths$time, deaths$episode == 5), subset(deaths$murdered, deaths$episode == 5))
-fit.ep5 <- survfit(ep5.surv~1)
-
-ep6.surv <- Surv(subset(deaths$time, deaths$episode == 6), subset(deaths$murdered, deaths$episode == 6))
-fit.ep6 <- survfit(ep6.surv~1)
-
-ep7.surv <- Surv(subset(deaths$time, deaths$episode == 7), subset(deaths$murdered, deaths$episode == 7))
-fit.ep7 <- survfit(ep7.surv~1)
-
-ep8.surv <- Surv(subset(deaths$time, deaths$episode == 8), subset(deaths$murdered, deaths$episode == 8))
-fit.ep8 <- survfit(ep8.surv~1)
-
-ep9.surv <- Surv(subset(deaths$time, deaths$episode == 9), subset(deaths$murdered, deaths$episode == 9))
-fit.ep9 <- survfit(ep9.surv~1)
-
-ep10.surv <- Surv(subset(deaths$time, deaths$episode == 10), subset(deaths$murdered, deaths$episode == 10))
-fit.ep10 <- survfit(ep10.surv~1)
-
-plot(fit.ep1, conf.int = F, mark.time = F, 
-     xlab = "Time (Miniutes)", ylab = "Survival Probability", 
-     main = "Survivial Curve: Time Until Murdered \n (Episodes 1-5 of Game of Thrones)")
-
-lines(fit.ep2, col = "blue", conf.int = F, mark.time = F)
-lines(fit.ep3, col = "red", conf.int = F, mark.time = F)
-lines(fit.ep4, col = "green", conf.int = F, mark.time = F)
-lines(fit.ep5, col = "purple", conf.int = F, mark.time = F)
-lines(fit.ep6, col = "orange", conf.int = F, mark.time = F)
-lines(fit.ep7, col = "brown", conf.int = F, mark.time = F)
-lines(fit.ep8, col = "blue", conf.int = F, mark.time = F)
-lines(fit.ep9, col = "red", conf.int = F, mark.time = F)
-lines(fit.ep10, col = "green", conf.int = F, mark.time = F)
-
-
+fit.house <- survfit(death.surv~house, data=deaths)
+ggsurv(fit.house) + labs(x="Time (Minutes)", title = "Survival Curves for GoT Murders by House")
 
