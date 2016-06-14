@@ -1,5 +1,11 @@
 #loading data and formatting
 
+#data sources ----
+#http://deathtimeline.com/ for season, ep, name, time, killed by, and type
+#http://regressing.deadspin.com/valar-morghulis-a-statistical-guide-to-deaths-in-game-1618282560 for allegiance/house
+#http://gameofthrones.wikia.com/ for allegiance/house 
+#http://www.r-statistics.com/2013/07/creating-good-looking-survival-curves-the-ggsurv-function/ for ggsurv function
+
 #packages ----
 library(dplyr)
 library(ggplot2)
@@ -167,7 +173,6 @@ censored <- deaths %>% group_by(murdered) %>% summarise(total = n()) %>% ungroup
 (type.plot <- ggplot(type, aes(x=reorder(as.factor(type), -total), y=total)) + 
   geom_bar(stat="identity")+ theme_hc() + 
   labs(x="\nCharacter Role", y="", title="Total Murders by Role"))
-
 
 #plot survival curves ----
 death.surv <- Surv(deaths$time, deaths$murdered)
