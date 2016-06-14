@@ -8,30 +8,24 @@ library(survival)
 library(nlme)
 library(lubridate)
 
-url <- read_html("http://deathtimeline.com/")
-selector_name <- ".name"
-name <- as.data.frame(html_nodes(url, selector_name) %>% html_text())
-
-selector_name <- ".time"
-time <- as.data.frame(html_nodes(url, selector_name) %>% html_text())
-
-selector_name <- ".death"
-death <- as.data.frame(html_nodes(url, selector_name) %>% html_text())
-
-deaths <- cbind(name, time)
-names(deaths)[1] <- "name"
-names(deaths)[2] <- "time"
-
-write.csv(deaths, file = "C:/Users/GRA/Desktop/Misc/R Working Directory/School/survival_analysis/project/deaths.csv")
-
-#load data and test idea
+#load & format data 
 deaths <- read.csv("C:/Users/GRA/Desktop/Misc/R Working Directory/School/survival_analysis/project/deaths.csv", 
                    stringsAsFactors = F)
-deaths$time <- hms(deaths$time)
+deaths$time <- ms(deaths$time)
 deaths$min <- minute(deaths$time)
 deaths$sec <- second(deaths$time)
-death.surv <- Surv(deaths$time, deaths$status)
+
+#organize into subsets
+ep <- deaths %>% group_by(episode) %>% summarise(total = sum(murdered))
+season <- deaths %>% group_by(season) %>% summarise(total = sum(murdered))
+house <- deaths %>% group_by(house) %>% summarise(total = sum(murdered)) %>% ungroup() %>% arrange(desc(total))
+type <-  deaths %>% group_by(type) %>% summarise(total = sum(murdered)) %>% ungroup() %>% arrange(desc(total))
+
+#plot simple survival curve
+death.surv <- Surv(deaths$time, deaths$murdered)
 
 fit <- survfit(death.surv~1)
 
-plot(fit, conf.int = F, mark.time = T)
+plot(fit, conf.int = T, mark.time = T, 
+     xlab = "Time (Miniutes)", ylab = "Survivl Probability", 
+     main = "Survivial Curve: Time Until Murdered \n (Seasons 1-5 of Game of Thrones)")
