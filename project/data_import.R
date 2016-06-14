@@ -1,10 +1,10 @@
-#loading data and formatting
+#loading data, formatting, plotting
 
 #data sources ----
-#http://deathtimeline.com/ for season, ep, name, time, killed by, and type
-#http://regressing.deadspin.com/valar-morghulis-a-statistical-guide-to-deaths-in-game-1618282560 for allegiance/house
-#http://gameofthrones.wikia.com/ for allegiance/house 
-#http://www.r-statistics.com/2013/07/creating-good-looking-survival-curves-the-ggsurv-function/ for ggsurv function
+#http://deathtimeline.com/ -> for season, ep, name, time, killed by, and type
+#http://regressing.deadspin.com/valar-morghulis-a-statistical-guide-to-deaths-in-game-1618282560  -> for allegiance/house
+#http://gameofthrones.wikia.com/  -> for allegiance/house 
+#http://www.r-statistics.com/2013/07/creating-good-looking-survival-curves-the-ggsurv-function/  -> for ggsurv function
 
 #packages ----
 library(dplyr)
