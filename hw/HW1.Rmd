@@ -16,12 +16,23 @@ wha <- read.table(file = "https://raw.githubusercontent.com/brndngrhm/survival_a
 ```
 
 ### 2.
-#### a.
-
-```{r, echo=T, fig.height=10, fig.width=10}
+#### a)
+ 
+```{r, echo=T, fig.height=8, fig.width=8}
 wha.surv <- Surv(wha$lenfol, wha$fstat)
 fit <- survfit(wha.surv~1)
-plot <- plot(fit, conf.int = T, xlab = "Number of days followed since MI", 
+plot <- plot(fit, conf.int = T, xlab = "Number of days followed since MI",
+             ylab = "Survival", main = "K-M Survival Curve of Heart Attack Survivors")
 ```
 
+#### b)
 
+#### c)
+
+#### d)
+
+#### e)
+
+#### f)
+
+#### g)
