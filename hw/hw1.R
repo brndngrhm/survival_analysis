@@ -1,5 +1,7 @@
 # HW1
 library(survival)
+library(OIsurv)
+library(KMsurv)
 
 #ggsurv function ----
 ggsurv <- function(s, CI = 'def', plot.cens = T, surv.col = 'gg.def',
@@ -141,3 +143,17 @@ summary(fit) #K-M Estimates
 plot(fit, conf.int = F, mark.time = T) #Survival Plot
 
 #2 ----
+wha <- read.table(file = "https://raw.githubusercontent.com/brndngrhm/survival_analysis/master/data/whas500.txt", 
+                  header = T)
+
+#a
+wha.surv <- Surv(wha$lenfol, wha$fstat)
+fit <- survfit(wha.surv~1)
+conf.bands <- confBands(wha.surv, confLevel=0.95, type="hall")
+
+plot <- plot(fit, conf.int = T)
+ggsurv(fit, mark.time = F)
+
+
+
+
