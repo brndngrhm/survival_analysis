@@ -150,9 +150,8 @@ wha <- read.table(file = "https://raw.githubusercontent.com/brndngrhm/survival_a
 wha.surv <- Surv(wha$lenfol, wha$fstat)
 fit <- survfit(wha.surv~1)
 conf.bands <- confBands(wha.surv, confLevel=0.95, type="hall")
-
 plot <- plot(fit, conf.int = T)
-ggsurv(fit, mark.time = F)
+
 
 
 
