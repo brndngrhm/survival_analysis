@@ -1,0 +1,27 @@
+---
+title: "Survival Data Analysis HW #1"
+author: "Brendan Graham"
+date: "June 20, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(survival)
+library(OIsurv)
+library(KMsurv)
+
+#load data 
+wha <- read.table(file = "https://raw.githubusercontent.com/brndngrhm/survival_analysis/master/data/whas500.txt", 
+                  header = T)
+```
+
+### 2.
+#### a.
+
+```{r, echo=T, fig.height=10, fig.width=10}
+wha.surv <- Surv(wha$lenfol, wha$fstat)
+fit <- survfit(wha.surv~1)
+plot <- plot(fit, conf.int = T, xlab = "Number of days followed since MI", 
+```
+
+
