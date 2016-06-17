@@ -9,6 +9,7 @@ output: html_document
 library(survival)
 library(OIsurv)
 library(KMsurv)
+library(km.ci)
 
 #load data 
 wha <- read.table(file = "https://raw.githubusercontent.com/brndngrhm/survival_analysis/master/data/whas500.txt", 
@@ -21,13 +22,24 @@ wha <- read.table(file = "https://raw.githubusercontent.com/brndngrhm/survival_a
 ```{r, echo=T, fig.height=8, fig.width=8}
 wha.surv <- Surv(wha$lenfol, wha$fstat)
 fit <- survfit(wha.surv~1)
-plot <- plot(fit, conf.int = T, xlab = "Number of days followed since MI",
-             ylab = "Survival", main = "K-M Survival Curve of Heart Attack Survivors")
+surv.plot <- plot(fit, conf.int = T, xlab = "Number of days followed since MI",
+             ylab = "Survival Probability", main = "K-M Survival Curve of Heart Attack Survivors")
+conf.bands <- km.ci(fit, method="loghall")
+lines(conf.bands, lty=3)
+legend(500, .4, c("K-M Curve", "Pointwise CI", "Simultaneous CB"), lty=c(1,2,3))
 ```
 
-#### b)
+#### b) 
+The estimated survival curve does not appears to be headed towards zero as time goes to infinity. The curve seems to be levelling-off around .40 to .50 at around 1,500 days.
+
 
 #### c)
+
+```{r, echo=T}
+quantile(fit, probs = c(.25, .5, .75))
+```
+
+To obtain the 95% confidence interval, R looks for every value of t such that the point-wise confidence interval for S(t) includes 0.50. In this case, the lower bound is t=1527, which has a 95% CI of (0.4958, 0.598). The next lowest time, t=1506 has a 95% CI of (0.5020, 0.602) which does not include 0.50 which is why the lower bound stopped at t=1527. Every CI for values of t > 1527 includes 0.50 which is why there is no upper bound reported by R.
 
 #### d)
 
