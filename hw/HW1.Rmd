@@ -12,6 +12,7 @@ library(KMsurv)
 library(km.ci)
 library(locfit)
 library(dplyr)
+library(survMisc)
 
 #load data 
 wha <- read.table(file = "https://raw.githubusercontent.com/brndngrhm/survival_analysis/master/data/whas500.txt", 
@@ -77,11 +78,18 @@ mrlife(1000,women$lenfol, women$fstat)
 
 #### e) 
 ```{r, echo=T, fig.height=8, fig.width=8}
-plot(fit.men, conf.int = F, mark.time=T, main="Survival Curves for Men and Women", ylab="Survival probability", xlab="Number of days followed since MI")
+plot(fit.men, conf.int = F, main="Survival Curves for Men and Women", ylab="Survival probability", xlab="Number of days followed since MI")
 lines(fit.women, conf.int = F, lwd=2)
 legend(500, .4, c("Male", "Female"), lwd = c(1,2))
 ```
 
 #### f)
+Ho: S~male~(t) = S~female~(t)  
+Ha: S~male~(t) != S~female~(t)
+```{r, echo=T}
+fit <- ten(wha.surv ~ gender, data=wha)
+comp(fit)
+```
+Since the survival curve for men and women do not cross we can just look at the results in the first table. Results in the first table from the 6 tests all show a signfificant difference between at at least the .05 level. Therefore we reject the null and conclude the alternative. We have enough evidence to conclude there is a difference between the survial curves for men and women. Based ont he survival plots in part (e), males have the higher survival probability.
 
 #### g)
