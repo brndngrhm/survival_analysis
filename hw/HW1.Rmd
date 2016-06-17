@@ -10,6 +10,8 @@ library(survival)
 library(OIsurv)
 library(KMsurv)
 library(km.ci)
+library(locfit)
+library(dplyr)
 
 #load data 
 wha <- read.table(file = "https://raw.githubusercontent.com/brndngrhm/survival_analysis/master/data/whas500.txt", 
@@ -42,8 +44,43 @@ quantile(fit, probs = c(.25, .5, .75))
 To obtain the 95% confidence interval, R looks for every value of t such that the point-wise confidence interval for S(t) includes 0.50. In this case, the lower bound is t=1527, which has a 95% CI of (0.4958, 0.598). The next lowest time, t=1506 has a 95% CI of (0.5020, 0.602) which does not include 0.50 which is why the lower bound stopped at t=1527. Every CI for values of t > 1527 includes 0.50 which is why there is no upper bound reported by R.
 
 #### d)
+```{r, echo=T}
+#split into men and women dataframes
+men <- wha %>% filter(gender == 0)
+women <- wha %>% filter(gender == 1)
 
-#### e)
+#mean survival time for men
+men.surv <- Surv(subset(men$lenfol,men$gender == 0), subset(men$fstat, men$gender == 0))
+fit.men <- survfit(men.surv~1)
+print(fit.men, print.rmean =T)
+
+#mean survival time for women
+women.surv <- Surv(subset(women$lenfol,women$gender == 1), subset(women$fstat, women$gender == 1))
+fit.women <- survfit(women.surv~1)
+print(fit.women, print.rmean =T)
+
+#mrlife function
+mrlife <- function(t, event, censoring){
+  kmfit <- survfit(Surv(event[event>t]-t, censoring[event>t])~1, conf.type="log-log")
+  print(kmfit, print.rmean = T)
+}
+
+#Mean Residual lifetime for Men at time 1000
+mrlife(1000,men$lenfol, men$fstat)
+
+#Mean Residual lifetime for Women at time 1000 
+mrlife(1000,women$lenfol, women$fstat)
+
+
+
+```
+
+#### e) 
+```{r, echo=T, fig.height=8, fig.width=8}
+plot(fit.men, conf.int = F, mark.time=T, main="Survival Curves for Men and Women", ylab="Survival probability", xlab="Number of days followed since MI")
+lines(fit.women, conf.int = F, lwd=2)
+legend(500, .4, c("Male", "Female"), lwd = c(1,2))
+```
 
 #### f)
 
