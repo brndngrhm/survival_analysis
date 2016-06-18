@@ -45,21 +45,26 @@ quantile(fit, probs = c(.25, .5, .75))
 To obtain the 95% confidence interval, R looks for every value of t such that the point-wise confidence interval for S(t) includes 0.50. In this case, the lower bound is t=1527, which has a 95% CI of (0.4958, 0.598). The next lowest time, t=1506 has a 95% CI of (0.5020, 0.602) which does not include 0.50 which is why the lower bound stopped at t=1527. Every CI for values of t > 1527 includes 0.50 which is why there is no upper bound reported by R.
 
 #### d)
+The mean survival time for men is 1448.5 and the mean survival time for women is 1260.2.  
+
 ```{r, echo=T}
 #split into men and women dataframes
 men <- wha %>% filter(gender == 0)
 women <- wha %>% filter(gender == 1)
 
 #mean survival time for men
-men.surv <- Surv(subset(men$lenfol,men$gender == 0), subset(men$fstat, men$gender == 0))
+men.surv <- Surv(men$lenfol, men$fstat)
 fit.men <- survfit(men.surv~1)
 print(fit.men, print.rmean =T)
 
 #mean survival time for women
-women.surv <- Surv(subset(women$lenfol,women$gender == 1), subset(women$fstat, women$gender == 1))
+women.surv <- Surv(women$lenfol, women$fstat)
 fit.women <- survfit(women.surv~1)
 print(fit.women, print.rmean =T)
+```
 
+At t=1000, the mean residual lifetome for men is  1060.4 and for women, it is 1063.8.
+```{r, echo=T}
 #mrlife function
 mrlife <- function(t, event, censoring){
   kmfit <- survfit(Surv(event[event>t]-t, censoring[event>t])~1, conf.type="log-log")
@@ -67,31 +72,69 @@ mrlife <- function(t, event, censoring){
 }
 
 #Mean Residual lifetime for Men at time 1000
-mrlife(1000,men$lenfol, men$fstat)
+mrlife(1000, wha$lenfol[wha$gender == 0], wha$fstat[wha$gender == 0])
 
 #Mean Residual lifetime for Women at time 1000 
-mrlife(1000,women$lenfol, women$fstat)
+mrlife(1000, wha$lenfol[wha$gender == 1], wha$fstat[wha$gender == 1])
 ```
 
-#### e) 
+
+It seemed strange that males have a higher mean survival time, while women have a higher mean residual lifetime at t=1000, so I calculated and plotted the mean resdial lifetimes for each gender and plotted them. I seems that at around t=1000 mean resodual life for women is slightly higher than that for men.
+
 ```{r, echo=T, fig.height=8, fig.width=8}
-plot(fit.men, conf.int = F, main="Survival Curves for Men and Women", ylab="Survival probability", xlab="Number of days followed since MI")
-lines(fit.women, conf.int = F, lwd=2)
-legend(500, .4, c("Male", "Female"), lwd = c(1,2))
+mrl.men <- km.mrl(men$lenfol, abs(men$fstat-1))[men$fstat == 0]
+time.men <- men$lenfol[men$fstat == 0]
+mrl.men <- cbind(mrl.men, time.men)
+mrl.men <- data.frame(mrl.men) %>% arrange(time.men)
+
+mrl.women <- km.mrl(women$lenfol, abs(women$fstat-1))[women$fstat == 0]
+time.women <- women$lenfol[women$fstat == 0]
+mrl.women <- cbind(mrl.women, time.women)
+mrl.women <- data.frame(mrl.women) %>% arrange(time.women)
+
+plot(mrl.women$time.women, mrl.women$mrl.women, ylab="Mean Resid. Life", xlab="Time", main="Mean Residual Life by Gender", col="Red",
+     xlim = c(min(mrl.women$time.women, mrl.men$time.men), max(mrl.women$time.women, mrl.men$time.men)), 
+     ylim = c(c(min(mrl.women$mrl.women, mrl.men$mrl.men), max(mrl.women$mrl.women, mrl.men$mrl.men))))
+points(mrl.men$time.men, mrl.men$mrl.men, col="Blue")
+legend(500,500, c("Women", "Men"), lty=c(1,1), col=c("Red", "Blue"))
+
+```
+
+
+#### e)
+The survival curves for men and women shows the survival curve for men is higher than he survival curve for women.
+```{r, echo=T, fig.height=8, fig.width=8}
+plot(fit.men, conf.int = F, main="Survival Curves for Men and Women", ylab="Survival probability", xlab="Number of days followed since MI", col="Blue", lwd=2)
+lines(fit.women, conf.int = F, lwd=2, col="red")
+legend(500, .4, c("Male", "Female"), lwd = c(1,2), col=c("Blue", "red"))
 ```
 
 #### f)
 Ho: S~male~(t) = S~female~(t)  
 Ha: S~male~(t) != S~female~(t)
 ```{r, echo=T}
-fit <- ten(wha.surv ~ gender, data=wha)
+fit.gender <- survfit(wha.surv ~ gender, data=wha)
+fit <- ten(fit.gender)
 comp(fit)
 ```
-Since the survival curve for men and women do not cross we can just look at the results in the first table. Results in the first table from the 6 tests all show a signfificant difference between at at least the .05 level. Therefore we reject the null and conclude the alternative. We have enough evidence to conclude there is a difference between the survial curves for men and women. Based ont he survival plots in part (e), males have the higher survival probability.
+Since the survival curve for men and women do not cross we can just look at the results in the first table. Results in the first table from the 6 tests all show a signfificant difference between at at the .05 level. Therefore we reject the null and conclude the alternative. We have enough evidence to conclude there is a difference between the survial curves for men and women at the .05 level. Based on the survival plots in part (e), males have higher survival probability.
 
 #### g)
-```{r, echo=T}
+```{r, echo=T, fig.height=8, fig.width=8}
+wha$age2 <- "Between 50 and 75"
+wha$age2[wha$age <= 50] <- "50 or less"
+wha$age2[wha$age >= 75] <- "75 or Greater"
 
+fit.low <- survfit(Surv(wha$lenfol[wha$age2 == "50 or less"], wha$fstat[wha$age2 == "50 or less"])~1, conf.type = "log-log")
+fit.med <- survfit(Surv(wha$lenfol[wha$age2 == "Between 50 and 75"], wha$fstat[wha$age2 == "Between 50 and 75"])~1, conf.type = "log-log")
+fit.high <- survfit(Surv(wha$lenfol[wha$age2 == "75 or Greater"], wha$fstat[wha$age2 == "75 or Greater"])~1, conf.type = "log-log")
+plot(fit.high, conf.int = F, main="Heart Attack Survival Curves by Age Category", xlab="Number of days followed since MI", ylab="Survival Probability", lwd=2, col="purple")
+lines(fit.med, conf.int = F, col="Red", lwd=2)
+lines(fit.low, conf.int = F, col="Blue", lwd=2)
+legend(500, .2, c("Greater than 75", "Between 50 and 75","50 or less"), lwd=c(2,2,2), col=c("Purple", "Red", "Blue"))
 
+fit.age <- survfit(Surv(wha$lenfol, wha$fstat) ~ wha$age2)
+fit <- ten(fit.age)
+comp(fit)
 ```
 
