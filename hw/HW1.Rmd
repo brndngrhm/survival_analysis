@@ -71,9 +71,6 @@ mrlife(1000,men$lenfol, men$fstat)
 
 #Mean Residual lifetime for Women at time 1000 
 mrlife(1000,women$lenfol, women$fstat)
-
-
-
 ```
 
 #### e) 
@@ -93,3 +90,8 @@ comp(fit)
 Since the survival curve for men and women do not cross we can just look at the results in the first table. Results in the first table from the 6 tests all show a signfificant difference between at at least the .05 level. Therefore we reject the null and conclude the alternative. We have enough evidence to conclude there is a difference between the survial curves for men and women. Based ont he survival plots in part (e), males have the higher survival probability.
 
 #### g)
+```{r, echo=T}
+
+
+```
+
