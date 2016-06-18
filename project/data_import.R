@@ -14,7 +14,6 @@ library(rvest)
 library(survival)
 library(nlme)
 library(lubridate)
-library(ggsurv)
 
 #ggsurv function ----
 ggsurv <- function(s, CI = 'def', plot.cens = T, surv.col = 'gg.def',
@@ -144,15 +143,31 @@ ggsurv <- function(s, CI = 'def', plot.cens = T, surv.col = 'gg.def',
 }
 
 #load & format data ----
-deaths <- read.csv("C:/Users/GRA/Desktop/Misc/R Working Directory/School/survival_analysis/project/deaths.csv", 
+deaths <- read.csv("~/R Working Directory/Villanova/survival_analysis/project/deaths.csv", 
                    stringsAsFactors = F)
 deaths$time <- ms(deaths$time)
 deaths$min <- minute(deaths$time)
 
+#collapse "House" Variable
+deaths$house2 <- "Other"
+deaths$house2[deaths$house == "House Stark"] <- "House Stark"
+deaths$house2[deaths$house == "Night's Watch"] <- "Night's Watch"
+deaths$house2[deaths$house == "None/unknown"] <- "None/unknown"
+deaths$house2[deaths$house == "House Lannister"] <- "House Lannister"
+deaths$house2[deaths$house == "Free Folk"] <- "Free Folk"
+deaths$house2[deaths$house == "House Baratheon"] <- "House Baratheon"
+deaths$house2[deaths$house == "House Targaryen"] <- "House Targaryen"
+deaths$house2[deaths$house == "House Bolton"] <- "House Bolton"
+deaths$house2[deaths$house == "Dothraki"] <- "Dothraki"
+deaths$house2[deaths$house == "House Arryn"] <- "House Arryn"
+
+#Sav3 .rda file
+save(deaths, file = "~/R Working Directory/Villanova/survival_analysis/project/deaths.rda")
+
 #organize into subsets ----
 ep <- deaths %>% group_by(episode) %>% summarise(total = sum(murdered))
 season <- deaths %>% group_by(season) %>% summarise(total = sum(murdered))
-house <- deaths %>% group_by(house) %>% summarise(total = sum(murdered)) %>% ungroup() %>% arrange(desc(total))
+house2 <- deaths %>% group_by(house2) %>% summarise(total = sum(murdered)) %>% ungroup() %>% arrange(desc(total))
 type <-  deaths %>% group_by(type) %>% summarise(total = sum(murdered)) %>% ungroup() %>% arrange(desc(total))
 censored <- deaths %>% group_by(murdered) %>% summarise(total = n()) %>% ungroup() %>% arrange(desc(total))
 min <- deaths %>% group_by(min) %>% summarise(total = sum(murdered))
@@ -166,7 +181,7 @@ min <- deaths %>% group_by(min) %>% summarise(total = sum(murdered))
   geom_bar(stat="identity") + theme_hc() + 
   labs(x="\nEpisode", y="", title="Total Murders by Episode Number"))
 
-(house.plot <- ggplot(house, aes(x=reorder(as.factor(house), total), y=total)) + 
+(house.plot <- ggplot(house2, aes(x=reorder(as.factor(house2), total), y=total)) + 
   geom_bar(stat="identity") + coord_flip() + theme_hc() + 
   labs(x="\nHouse", y="", title="Total Murders by House"))
 
