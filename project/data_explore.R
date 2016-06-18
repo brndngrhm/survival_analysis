@@ -176,6 +176,26 @@ min <- deaths %>% group_by(min) %>% summarise(total = sum(murdered))
   geom_bar(stat="identity")+ theme_hc() + 
   labs(x="\nMinute", y="", title="Total Murders by Minute"))
 
+#estimated percentiles, mean, mean resid life for deaths ----
+summary(fit) #k-m values in table form
+quantile(fit, probs=c(.25, .5, .75)) #estimates and conf int for percentiles
+print(fit, print.rmean=T) #Mean for restricetd survival curve
+
+#mean resid life
+mrl <- km.mrl(deaths$min[deaths$murdered == 1], abs(deaths$murdered[deaths$murdered == 1]))
+mrl <- cbind(deaths$min[deaths$murdered == 1], mrl)
+mrl <- data.frame(mrl) %>% arrange(V1)
+plot(mrl[,1], mrl[,2], xlab="Minute", ylab="Mean Residual Life in Minutes", main = "Mean Residual Lifetime for GoT Characters")
+
+#mrlife function for mean resid life at a specific time - DOESN'T SEEM TO MATCH PLOT OR MRL TABLE
+mrlife <- function(t, event, censoring){
+  kmfit <- survfit(Surv(event[event>t]-t, censoring[event>t])~1, conf.type="log-log")
+  print(kmfit, print.rmean = T)
+}
+
+mrlife(2, deaths$min, deaths$murdered) #supposed to look at "restricted mean with upper limit" line????
+
+
 #plot K-M survival curves ----
 death.surv <- Surv(deaths$time, deaths$murdered)
 fit <- survfit(death.surv~1, data=deaths)
@@ -195,15 +215,4 @@ ggsurv(fit.type) + labs(x="Time (Minutes)", title = "Survival Curves for GoT Mur
 
 fit.house <- survfit(death.surv~house2, data=deaths)
 ggsurv(fit.house) + labs(x="Time (Minutes)", title = "Survival Curves for GoT Murders by House")
-
-#estimated percentiles, mean, mean resid life for deaths ----
-summary(fit) #k-m values in table form
-quantile(fit, probs=c(.25, .5, .75)) #estimates and conf int for percentiles
-print(fit, print.rmean=T) #Mean for restricetd survival curve
-
-#mrlife function for mean resid life at a specific time
-mrlife <- function(t, event, censoring){
-  kmfit <- survfit(Surv(event[event>t]-t, censoring[event>t])~1, conf.type="log-log")
-  print(kmfit, print.rmean = T)
-}
 
