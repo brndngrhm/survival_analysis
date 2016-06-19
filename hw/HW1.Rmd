@@ -33,7 +33,7 @@ legend(500, .4, c("K-M Curve", "Pointwise CI", "Simultaneous CB"), lty=c(1,2,3))
 ```
 
 #### b) 
-The estimated survival curve does not appears to be headed towards zero as time goes to infinity. The curve seems to be levelling-off around .40 to .50 at around 1,500 days.
+The estimated survival curve does not appear to be headed towards zero as time goes to infinity. The curve seems to be levelling-off around .40 to .50 at around 1,500 days.
 
 
 #### c)
@@ -42,7 +42,7 @@ The estimated survival curve does not appears to be headed towards zero as time 
 quantile(fit, probs = c(.25, .5, .75))
 ```
 
-To obtain the 95% confidence interval, R looks for every value of t such that the point-wise confidence interval for S(t) includes 0.50. In this case, the lower bound is t=1527, which has a 95% CI of (0.4958, 0.598). The next lowest time, t=1506 has a 95% CI of (0.5020, 0.602) which does not include 0.50 which is why the lower bound stopped at t=1527. Every CI for values of t > 1527 includes 0.50 which is why there is no upper bound reported by R.
+To obtain the 95% confidence interval for the 50th percentile, R looks for every value of t such that the point-wise confidence interval for S(t) includes 0.50. In this case, the lower bound is t=1527, which has a 95% CI of (0.4958, 0.598). The next lowest time, t=1506 has a 95% CI of (0.5020, 0.602), which does not include 0.50, so the lower bound stopped at t=1527. Every CI for values of t > 1527 includes 0.50 which is why there is no upper bound reported by R for the 95% confidence interval for the 50th percentile.
 
 #### d)
 The mean survival time for men is 1448.5 and the mean survival time for women is 1260.2.  
@@ -77,7 +77,6 @@ mrlife(1000, wha$lenfol[wha$gender == 0], wha$fstat[wha$gender == 0])
 #Mean Residual lifetime for Women at time 1000 
 mrlife(1000, wha$lenfol[wha$gender == 1], wha$fstat[wha$gender == 1])
 ```
-
 
 It seemed strange that males have a higher mean survival time, while women have a higher mean residual lifetime at t=1000, so I calculated and plotted the mean resdial lifetimes for each gender and plotted them. I seems that at around t=1000 mean resodual life for women is slightly higher than that for men.
 
@@ -117,9 +116,12 @@ fit.gender <- survfit(wha.surv ~ gender, data=wha)
 fit <- ten(fit.gender)
 comp(fit)
 ```
-Since the survival curve for men and women do not cross we can just look at the results in the first table. Results in the first table from the 6 tests all show a signfificant difference between at at the .05 level. Therefore we reject the null and conclude the alternative. We have enough evidence to conclude there is a difference between the survial curves for men and women at the .05 level. Based on the survival plots in part (e), males have higher survival probability.
+Since the survival curve for men and women do not cross we can just look at the results in the first table. Results in the first table from the 6 tests all show a signfificant difference between the male and females curves at at the .05 level. Therefore we reject the null and conclude the alternative. We have enough evidence to conclude there is a difference between the survial curves for men and women at the .05 level. Based on the survival plots in part (e), males have higher survival probability.
 
 #### g)
+Ho: S~50 or less~(t) = S~Between 50 and 75~(t) = S~75 or Greater~(t)  
+Ha: At least 2 equalities in Ho are not true
+
 ```{r, echo=T, fig.height=8, fig.width=8}
 wha$age2 <- "Between 50 and 75"
 wha$age2[wha$age <= 50] <- "50 or less"
@@ -136,5 +138,13 @@ legend(500, .2, c("Greater than 75", "Between 50 and 75","50 or less"), lwd=c(2,
 fit.age <- survfit(Surv(wha$lenfol, wha$fstat) ~ wha$age2)
 fit <- ten(fit.age)
 comp(fit)
+```
+The results in the first table from the 6 tests all indicate very high chi-square values. Therefore we reject the null and conclude the alternative. We have enough evidence at the .05 level to conclude there is a difference between the survival curves for the three age groups (50 or less, Between 50 and 75, 75 or Greater). Since there is a difference in the curves we can conduct a trend test:
+
+Ho: There is a trend present in the survival curves
+Ha: There is not a trend present in the survival curves
+
+```{r, echo=T}
+
 ```
 
