@@ -1,8 +1,8 @@
 ---
-title: "Survival Data Analysis HW #1"
+title: 'Survival Data Analysis HW #1'
 author: "Brendan Graham"
 date: "June 20, 2016"
-output: html_document
+output: word_document
 ---
 
 ```{r setup, include=FALSE}
@@ -17,6 +17,7 @@ library(survMisc)
 #load data 
 wha <- read.table(file = "https://raw.githubusercontent.com/brndngrhm/survival_analysis/master/data/whas500.txt", 
                   header = T)
+wha <- wha %>% select(age, gender, lenfol, fstat)
 ```
 
 ### 2.
@@ -33,7 +34,7 @@ legend(500, .4, c("K-M Curve", "Pointwise CI", "Simultaneous CB"), lty=c(1,2,3))
 ```
 
 #### b) 
-The estimated survival curve does not appear to be headed towards zero as time goes to infinity. The curve seems to be levelling-off around .40 to .50 at around 1,500 days.
+The estimated survival curve does not appear to be headed towards zero as time goes to infinity. The curve seems to be leveling-off around .40 to .50 at around 1,500 days.
 
 
 #### c)
@@ -63,7 +64,7 @@ fit.women <- survfit(women.surv~1)
 print(fit.women, print.rmean =T)
 ```
 
-At t=1000, the mean residual lifetome for men is  1060.4 and for women, it is 1063.8.
+At t=1000, the mean residual lifetime for men is  1060.4 and for women, it is 1063.8.
 ```{r, echo=T}
 #mrlife function
 mrlife <- function(t, event, censoring){
@@ -78,7 +79,7 @@ mrlife(1000, wha$lenfol[wha$gender == 0], wha$fstat[wha$gender == 0])
 mrlife(1000, wha$lenfol[wha$gender == 1], wha$fstat[wha$gender == 1])
 ```
 
-It seemed strange that males have a higher mean survival time, while women have a higher mean residual lifetime at t=1000, so I calculated and plotted the mean resdial lifetimes for each gender and plotted them. I seems that at around t=1000 mean resodual life for women is slightly higher than that for men.
+It seemed strange that males have a higher mean survival time, while women have a higher mean residual lifetime at t=1000, so I calculated and plotted the mean residual lifetimes for each gender and plotted them. I seems that at around t=1000 mean residual life for women is slightly higher than that for men.
 
 ```{r, echo=T, fig.height=8, fig.width=8}
 mrl.men <- km.mrl(men$lenfol, abs(men$fstat-1))[men$fstat == 0]
@@ -116,12 +117,32 @@ fit.gender <- survfit(wha.surv ~ gender, data=wha)
 fit <- ten(fit.gender)
 comp(fit)
 ```
-Since the survival curve for men and women do not cross we can just look at the results in the first table. Results in the first table from the 6 tests all show a signfificant difference between the male and females curves at at the .05 level. Therefore we reject the null and conclude the alternative. We have enough evidence to conclude there is a difference between the survial curves for men and women at the .05 level. Based on the survival plots in part (e), males have higher survival probability.
+Since the survival curve for men and women do not cross we can just look at the results in the first table. Results in the first table from the 6 tests all show a significant difference between the male and females curves at at the .05 level. Therefore we reject the null and conclude the alternative. We have enough evidence to conclude there is a difference between the survival curves for men and women at the .05 level. Based on the survival plots in part (e), males have higher survival probability.
 
 #### g)
 Ho: S~50 or less~(t) = S~Between 50 and 75~(t) = S~75 or Greater~(t)  
 Ha: At least 2 equalities in Ho are not true
 
+```{r, echo=T, fig.height=8, fig.width=8}
+wha$age2 <- 2
+wha$age2[wha$age <= 50] <- 1
+wha$age2[wha$age >= 75] <- 3
+
+fit.age <- ten(survfit(Surv(wha$lenfol, wha$fstat) ~ age2, data=wha))
+comp(fit.age, data = wha)
+```
+The results in the first table from the 6 tests all indicate very high chi-square values. Therefore we reject the null and conclude the alternative. We have enough evidence at the .05 level to conclude there is a difference between the survival curves for the three age groups (50 or less, Between 50 and 75, 75 or Greater). Since there is a difference in the curves we can conduct a trend test:
+
+Ho: There is a trend present in the survival curves
+Ha: There is not a trend present in the survival curves
+
+```{r, echo=T}
+wha2 <- wha %>% arrange(lenfol)
+cbind(fit.age$cg, unique(cbind(wha2$lenfol,wha2$age2)))[1:10,]
+comp(fit.age, scores=c(3, 2, 1), data=wha)
+```
+
+Given the high chi-square values shown in the test output, we can reject the null and conclude the alternative. We have enough evidence at the .05 level to conclude there is a trend present. To visualize the trend, below is a plot of the three survival curves by age category.
 ```{r, echo=T, fig.height=8, fig.width=8}
 wha$age2 <- "Between 50 and 75"
 wha$age2[wha$age <= 50] <- "50 or less"
@@ -134,17 +155,5 @@ plot(fit.high, conf.int = F, main="Heart Attack Survival Curves by Age Category"
 lines(fit.med, conf.int = F, col="Red", lwd=2)
 lines(fit.low, conf.int = F, col="Blue", lwd=2)
 legend(500, .2, c("Greater than 75", "Between 50 and 75","50 or less"), lwd=c(2,2,2), col=c("Purple", "Red", "Blue"))
-
-fit.age <- survfit(Surv(wha$lenfol, wha$fstat) ~ wha$age2)
-fit <- ten(fit.age)
-comp(fit)
-```
-The results in the first table from the 6 tests all indicate very high chi-square values. Therefore we reject the null and conclude the alternative. We have enough evidence at the .05 level to conclude there is a difference between the survival curves for the three age groups (50 or less, Between 50 and 75, 75 or Greater). Since there is a difference in the curves we can conduct a trend test:
-
-Ho: There is a trend present in the survival curves
-Ha: There is not a trend present in the survival curves
-
-```{r, echo=T}
-
 ```
 
