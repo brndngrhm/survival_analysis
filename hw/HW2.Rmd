@@ -1,0 +1,54 @@
+---
+title: "HW 2"
+author: "Brendan Graham"
+date: "June 24, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(survival)
+library(OIsurv)
+library(KMsurv)
+library(km.ci)
+library(locfit)
+library(dplyr)
+library(survMisc)
+
+```
+
+### 2.
+#### a)
+```{r, echo=T}
+#find mean using integration
+mean.wei <- function(x,t,shape, scale) x*dweibull(x, shape, scale)
+integrate(mean.wei, 0, Inf, shape=1.5, scale=100)
+
+#find mean resid lifetime at t=100
+mean.resid.wei <- function(x,t,shape, scale) {(x-t)*dweibull(x,shape,scale)/(1-pweibull(t, shape, scale))}
+integrate(mean.resid.wei, 100, Inf, t=100, shape=1.5, scale=100)
+```
+
+#### b) 
+The 35th percentile for survival time using a Weibull distribution with shape=1.5 and scale=100 is:
+```{r, echo=T}
+as.numeric(format(qweibull(.35, 1.5, 100), digits = 4))
+```
+
+#### c)
+Appoximate mean survival time using a random sample of 100,000 from a Weibull distribution:
+```{r, echo=T}
+set.seed(624)
+samp <- rweibull(100000, 1.5, 100)
+mean(samp)
+```
+
+Appoximate mean residual life using a random sample of 100,000 from a Weibull distribution:
+```{r, echo=T}
+mean(samp[samp>100])
+```
+
+Appoximate 35th percentile using a random sample of 100,000 from a Weibull distribution:
+```{r, echo=T}
+quantile(samp, probs=c(.35))
+```
+
