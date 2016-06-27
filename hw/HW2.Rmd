@@ -2,7 +2,7 @@
 title: "HW 2"
 author: "Brendan Graham"
 date: "June 24, 2016"
-output: html_document
+output: word_document
 ---
 
 ```{r setup, include=FALSE}
@@ -19,12 +19,12 @@ library(survMisc)
 ### 2.
 #### a)
 ```{r, echo=T}
-#find mean using integration
+#mean using integration
 mean.wei <- function(x,t,shape, scale) x*dweibull(x, shape, scale)
 integrate(mean.wei, 0, Inf, shape=1.5, scale=100)
 
-#find mean resid lifetime at t=100
-mean.resid.wei <- function(x,t,shape, scale) {(x-t)*dweibull(x,shape,scale)/(1-pweibull(t, shape, scale))}
+#mean resid lifetime at t=100
+mean.resid.wei <- function(x,t,shape,scale) {(x-t)*dweibull(x,shape,scale)/(1-pweibull(t, shape, scale))}
 integrate(mean.resid.wei, 100, Inf, t=100, shape=1.5, scale=100)
 ```
 
@@ -35,20 +35,21 @@ as.numeric(format(qweibull(.35, 1.5, 100), digits = 4))
 ```
 
 #### c)
-Appoximate mean survival time using a random sample of 100,000 from a Weibull distribution:
+Appoximate mean survival time using a random sample of 100,000 from a Weibull distribution with shape 1.5 and scale 100:
 ```{r, echo=T}
 set.seed(624)
 samp <- rweibull(100000, 1.5, 100)
 mean(samp)
 ```
 
-Appoximate mean residual life using a random sample of 100,000 from a Weibull distribution:
+Appoximate mean residual life using a random sample of 100,000 from a Weibull distribution with shape 1.5 and scale 100:
 ```{r, echo=T}
-mean(samp[samp>100])
+mean(samp[samp>100]) - 100
 ```
 
-Appoximate 35th percentile using a random sample of 100,000 from a Weibull distribution:
+Appoximate 35th percentile using a random sample of 100,000 from a Weibull distribution with shape 1.5 and scale 100:
 ```{r, echo=T}
 quantile(samp, probs=c(.35))
 ```
 
+The approximate mean, residual life at 100 and 35th percentile from the random sample are roughly the same as the corresponding values calculated in part (a).
