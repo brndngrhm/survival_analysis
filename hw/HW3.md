@@ -3,7 +3,6 @@ Brendan Graham
 June 28, 2016  
 
 
-
 ### 3.
 #### a) 
 Fitted model for rectime using a Weibull AFT Model:  
