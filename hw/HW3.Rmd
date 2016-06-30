@@ -1,12 +1,11 @@
 ---
 title: "HW3"
 author: "Brendan Graham"
-date: "June 28, 2016"
+date: "July 6, 2016"
 output:  
       html_document:  
         keep_md: true
 ---
-
 ```{r setup, include=FALSE}
 library(survival)
 library(OIsurv)
