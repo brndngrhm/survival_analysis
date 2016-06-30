@@ -102,13 +102,34 @@ summary(weib.fit.f)
 ```
 
 #### g)
-Ho: grade should be a quantitative variable
-Ha:grade should be a categorical variable
+Ho: grade should be a quantitative variable  
+Ha: grade should be a categorical variable
 
-LRT Stat: Which model to use??
+LRT Stat = (-2)*(-2582.3 - (-2580.6)) = 3.4
+
+Rejection Region: LRT Stat > Chi-Square(2) = 5.991
+
+Conclusion: Since 3.4 is not > 5.991, we do not reject the null and do not conclude the alternative. Treating grade as a quantitative variable is reasonable.
 
 ```{r, echo=T, warning=F}
+weib.fit.reg <- survreg(Surv(gbcs$rectime, gbcs$censrec) ~ hormone + size  + grade + nodes + prog_recp + size2, data=gbcs, dist="weibull")
+weib.fit.factor <- survreg(Surv(gbcs$rectime, gbcs$censrec) ~ hormone + size  + as.factor(grade) + nodes + prog_recp + size2, data=gbcs, dist="weibull")
 
+summary(weib.fit.reg)
+summary(weib.fit.factor)
+
+#rejection region = qchisq(.95, df=2) = 5.991
+
+```
+
+#### h)
+The plot below indicates the fit is good, but could likely be improved. It underestimates the cumulative hazard at first, then overestimates it. Fitting separate curves for hormone or grade might improve the fit.
+
+```{r, echo=T, warnings=F}
+fit.final <- flexsurvreg(Surv(gbcs$rectime, gbcs$censrec) ~ hormone + size  + grade + nodes + prog_recp + size2, data=gbcs, dist="weibull")
+km.fit <- survfit(Surv(gbcs$rectime, gbcs$censrec) ~1)
+plot(km.fit, fun="cumhaz", conf.int = F, xlab="Time in Days", ylab="Cumulative Hazard", main="Comparing AFT and K-M Cumulative Hazard")
+lines(fit.final, type="cumhaz", ci=F)
 
 ```
 
