@@ -16,6 +16,8 @@ library(nlme)
 library(lubridate)
 library(locfit)
 library(survMisc)
+library(muhaz)
+library(flexsurv)
 
 #load .rda file
 deaths <- load(file = "~/R Working Directory/Villanova/survival_analysis/project/deaths.rda")
@@ -176,16 +178,30 @@ min <- deaths %>% group_by(min) %>% summarise(total = sum(murdered))
   geom_bar(stat="identity")+ theme_hc() + 
   labs(x="\nMinute", y="", title="Total Murders by Minute"))
 
+#plot K-M survival curves ----
+death.surv <- Surv(deaths$time, deaths$murdered)
+fit <- survfit(death.surv~1, data=deaths)
+plot(fit, main="Survival Curve for GoT Murders (Seasons 1-5)", xlab = "Minute", ylab = "Survival Probability")
+conf.bands <- km.ci(fit, method = "loghall")
+lines(conf.bands, lty=3, col="red")
+legend(40, .8, c("K-M Curve"," Pointwise CI", "Simultaneous CB"), lty=c(1,2,3))
+
+fit.season <- survfit(death.surv~season, data=deaths)
+ggsurv(fit.season) + labs(x="Time (Minutes)",  y="Survival Probability", title = "Survival Curves for GoT Murders by Season")
+
+fit.ep <- survfit(death.surv~episode, data=deaths)
+ggsurv(fit.ep) + labs(x="Time (Minutes)",  y="Survival Probability", title = "Survival Curves for GoT Murders by Episode Number")
+
+fit.type <- survfit(death.surv~type, data=deaths)
+ggsurv(fit.type) + labs(x="Time (Minutes)",  y="Survival Probability", title = "Survival Curves for GoT Murders by Character Type")
+
+fit.house <- survfit(death.surv~house2, data=deaths)
+ggsurv(fit.house) + labs(x="Time (Minutes)", y="Survival Probability", title = "Survival Curves for GoT Murders by House")
+
 #estimated percentiles, mean, mean resid life for deaths ----
 summary(fit) #k-m values in table form
 quantile(fit, probs=c(.25, .5, .75)) #estimates and conf int for percentiles
-print(fit, print.rmean=T) #Mean for restricetd survival curve
-
-#mean resid life
-mrl <- km.mrl(deaths$min[deaths$murdered == 1], abs(deaths$murdered[deaths$murdered == 1]))
-mrl <- cbind(deaths$min[deaths$murdered == 1], mrl)
-mrl <- data.frame(mrl) %>% arrange(V1)
-plot(mrl[,1], mrl[,2], xlab="Minute", ylab="Mean Residual Life in Minutes", main = "Mean Residual Lifetime for GoT Characters")
+print(fit, print.rmean=T) #Mean for restricted survival curve
 
 #mrlife function for mean resid life at a specific time - DOESN'T SEEM TO MATCH PLOT OR MRL TABLE
 mrlife <- function(t, event, censoring){
@@ -193,25 +209,37 @@ mrlife <- function(t, event, censoring){
   print(kmfit, print.rmean = T)
 }
 
-mrlife(2, deaths$min, deaths$murdered) #supposed to look at "restricted mean with upper limit" line????
+mrlife(10, deaths$min, deaths$murdered) #supposed to look at "restricted mean with upper limit" line????
 
-#plot K-M survival curves ----
-death.surv <- Surv(deaths$time, deaths$murdered)
-fit <- survfit(death.surv~1, data=deaths)
-plot(fit, main="Survival Curve for GoT Murders (Seasons 1-5)", xlab = "Minute", ylab = "Survival Probability")
-conf.bands <- km.ci(fit, method = "loghall")
-lines(conf.bands, lty=3)
-legend(40, .8, c("K-M Curve"," Pointwise CI", "Simultaneous CB"), lty=c(1,2,3))
+#calculating tests comparing curves ----
+# my survival curves have a lot of crossing, not sure if these tests are valid
+season.comp <- ten(survfit(Surv(deaths$time, deaths$murdered)~deaths$season))
+comp(season.comp)
 
-fit.season <- survfit(death.surv~season, data=deaths)
-ggsurv(fit.season) + labs(x="Time (Minutes)", title = "Survival Curves for GoT Murders by Season")
+ep.comp <- ten(survfit(Surv(deaths$time, deaths$murdered)~deaths$episode))
+comp(ep.comp) #shows sig difference
 
-fit.ep <- survfit(death.surv~episode, data=deaths)
-ggsurv(fit.ep) + labs(x="Time (Minutes)", title = "Survival Curves for GoT Murders by Episode Number")
+type.comp <- ten(survfit(Surv(deaths$time, deaths$murdered)~deaths$type))
+comp(type.comp)
 
-fit.type <- survfit(death.surv~type, data=deaths)
-ggsurv(fit.type) + labs(x="Time (Minutes)", title = "Survival Curves for GoT Murders by Character Type")
+house.comp <- ten(survfit(Surv(deaths$time, deaths$murdered)~deaths$house2))
+comp(house.comp)
 
-fit.house <- survfit(death.surv~house2, data=deaths)
-ggsurv(fit.house) + labs(x="Time (Minutes)", title = "Survival Curves for GoT Murders by House")
+#hazard rate (Nelson - Aalen Estimator),  est. culumative hazard function & regular hazard function ----
+NA.fit <- survfit(coxph(Surv(deaths$time, deaths$murdered)~1), type = "aalen")
+summary(NA.fit)
+
+plot(NA.fit, conf.int = F, mark.time=T,  main = "K-M and N-A Estimated Survival Curves", 
+     xlab="Time(Min)", ylab="Survival Probability", col="red")
+lines(fit, conf.int = F)
+legend(50, 0.7, c("K-M", "N-A"), lty=c(1, 1), col=c("black", "red"))
+
+#culumative hazard function
+plot(NA.fit, fun="cumhaz", mark.time=F, conf.int=F, 
+     main="Estimated Cumulative Hazard Function", 
+     xlab="Time (Min)", ylab="Cumulative Hazard")
+
+#hazard function
+haz <- muhaz(deaths$min, deaths$murdered)
+plot(haz, main="Estimated Hazard Function", xlab="Time (Min)", ylab="Hazard Rate")
 
