@@ -14,6 +14,10 @@ library(rvest)
 library(survival)
 library(nlme)
 library(lubridate)
+library(locfit)
+library(survMisc)
+library(muhaz)
+library(flexsurv)
 
 #ggsurv function ----
 ggsurv <- function(s, CI = 'def', plot.cens = T, surv.col = 'gg.def',
@@ -143,8 +147,7 @@ ggsurv <- function(s, CI = 'def', plot.cens = T, surv.col = 'gg.def',
 }
 
 #load & format data ----
-deaths <- read.csv("~/R Working Directory/Villanova/survival_analysis/project/deaths.csv", 
-                   stringsAsFactors = F)
+deaths <- read.csv(file = "https://raw.githubusercontent.com/brndngrhm/survival_analysis/master/project/deaths.csv", header = T, strip.white = T)
 deaths$time <- ms(deaths$time)
 deaths$min <- minute(deaths$time)
 
@@ -161,51 +164,5 @@ deaths$house2[deaths$house == "House Bolton"] <- "House Bolton"
 deaths$house2[deaths$house == "Dothraki"] <- "Dothraki"
 deaths$house2[deaths$house == "House Arryn"] <- "House Arryn"
 
-#Sav3 .rda file
+#Save .rda file
 save(deaths, file = "~/R Working Directory/Villanova/survival_analysis/project/deaths.rda")
-
-#organize into subsets ----
-ep <- deaths %>% group_by(episode) %>% summarise(total = sum(murdered))
-season <- deaths %>% group_by(season) %>% summarise(total = sum(murdered))
-house2 <- deaths %>% group_by(house2) %>% summarise(total = sum(murdered)) %>% ungroup() %>% arrange(desc(total))
-type <-  deaths %>% group_by(type) %>% summarise(total = sum(murdered)) %>% ungroup() %>% arrange(desc(total))
-censored <- deaths %>% group_by(murdered) %>% summarise(total = n()) %>% ungroup() %>% arrange(desc(total))
-min <- deaths %>% group_by(min) %>% summarise(total = sum(murdered))
-
-#summary plots ----
-(season.plot <- ggplot(season, aes(x=as.factor(season), y=total)) + 
-  geom_bar(stat="identity") + theme_hc()+ 
-  labs(x="\n Season", y="", title="Total Murders by Season"))
-
-(ep.plot <- ggplot(ep, aes(x=as.factor(episode), y=total)) + 
-  geom_bar(stat="identity") + theme_hc() + 
-  labs(x="\nEpisode", y="", title="Total Murders by Episode Number"))
-
-(house.plot <- ggplot(house2, aes(x=reorder(as.factor(house2), total), y=total)) + 
-  geom_bar(stat="identity") + coord_flip() + theme_hc() + 
-  labs(x="\nHouse", y="", title="Total Murders by House"))
-
-(type.plot <- ggplot(type, aes(x=reorder(as.factor(type), -total), y=total)) + 
-  geom_bar(stat="identity")+ theme_hc() + 
-  labs(x="\nCharacter Role", y="", title="Total Murders by Role"))
-
-(min.plot <- ggplot(min, aes(x=min, y=total)) + 
-  geom_bar(stat="identity")+ theme_hc() + 
-  labs(x="\nMinute", y="", title="Total Murders by Minute"))
-
-#plot survival curves ----
-death.surv <- Surv(deaths$time, deaths$murdered)
-fit <- survfit(death.surv~1, data=deaths)
-ggsurv(fit) + labs(x="Time (Minutes)", title = "Survival Curve for GoT Murders (Seasons 1-5)")
-
-fit.season <- survfit(death.surv~season, data=deaths)
-ggsurv(fit.season) + labs(x="Time (Minutes)", title = "Survival Curves for GoT Murders by Season")
-
-fit.ep <- survfit(death.surv~episode, data=deaths)
-ggsurv(fit.ep) + labs(x="Time (Minutes)", title = "Survival Curves for GoT Murders by Episode Number")
-
-fit.type <- survfit(death.surv~type, data=deaths)
-ggsurv(fit.type) + labs(x="Time (Minutes)", title = "Survival Curves for GoT Murders by Character Type")
-
-fit.house <- survfit(death.surv~house, data=deaths)
-ggsurv(fit.house) + labs(x="Time (Minutes)", title = "Survival Curves for GoT Murders by House")
