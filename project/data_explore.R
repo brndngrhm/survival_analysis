@@ -18,6 +18,7 @@ library(locfit)
 library(survMisc)
 library(muhaz)
 library(flexsurv)
+library(ggthemes)
 
 #load .rda file
 deaths <- load(file = "~/R Working Directory/Villanova/survival_analysis/project/deaths.rda")
