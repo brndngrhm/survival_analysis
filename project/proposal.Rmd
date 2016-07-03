@@ -1,0 +1,13 @@
+---
+title: "Survival Data Analysis Project PRoposal"
+author: "Brendan Graham"
+date: "July 6, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+#http://deathtimeline.com/ -> for season, ep, name, time, killed by, and type
+#http://regressing.deadspin.com/valar-morghulis-a-statistical-guide-to-deaths-in-game-1618282560  -> for allegiance/house
+#http://gameofthrones.wikia.com/  -> for allegiance/house 
+```
+
