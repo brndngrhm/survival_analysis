@@ -2,9 +2,10 @@
 title: "HW3"
 author: "Brendan Graham"
 date: "July 6, 2016"
-output:  
-      html_document:  
-        keep_md: true
+output:
+  word_document: default
+  html_document:
+    keep_md: yes
 ---
 ```{r setup, include=FALSE}
 library(survival)
@@ -17,15 +18,13 @@ library(survMisc)
 library(flexsurv)
 library(knitr)
 library(MASS)
-
 gbcs <- read.table(file = "https://raw.githubusercontent.com/brndngrhm/survival_analysis/master/data/gbcs.txt", header = T, stringsAsFactors = F)
 gbcs <- gbcs %>% dplyr::select(rectime, censrec, age, menopause, hormone, size, grade, nodes, prog_recp, estrg_recp)
-
 ```
 
 ### 3.
 #### a) 
-Fitted model for rectime using a Weibull AFT Model:  
+Fitted AFT model for "rectime" using a Weibull distribution:  
 _log(T)_ = 8.39983 - 0.00156 * _age_ + 0.2808 * _hormone_ - 0.01117 * _size_ - 0.31116 * _grade_
 ```{r, echo=T} 
 weib.fit <- survreg(Surv(gbcs$rectime, gbcs$censrec) ~ age  + hormone + size + grade, data=gbcs, dist="weibull")
@@ -37,15 +36,15 @@ Interpretations:
 
 * __Age__: For every year increase in age, we estimate the expected survival time for women with breast cancer will decrease by a factor of e^- 0.00156^ = `r format(exp(- 0.00156), digits=4)`, holding all else in the model constant.  
 
-* __Hormone (AFT Interpretation)__: Holding all else in the model constant, we estimate that those receiving hormone therapy will survive e^0.2808^ = `r format(exp(0.2808), digits=4)` times longer than those not receiving hormones therapy on average, holding all else in the model constant.  
+* __Hormone (AFT interpretation)__: Holding all else in the model constant, we estimate that those receiving hormone therapy will survive e^0.2808^ = `r format(exp(0.2808), digits=4)` times longer than those not receiving hormones therapy on average, holding all else in the model constant.  
 
-* __Hormone (proportional hazards interpretation)__: We estimate that women with breast cancer who receive hormone therapy die at a rate that is e^(-0.2808/0.758)^ = `r format(exp(-0.2808/0.758), digits=4)` times that of women with breast cancer who receive hormone therapy, holding all else in the model constant.
+* __Hormone (proportional hazards interpretation)__: We estimate that women with breast cancer who receive hormone therapy die at a rate that is e^(-0.2808/0.758)^ = `r format(exp(-0.2808/0.758), digits=4)` times that of women with breast cancer who do not receive hormone therapy, holding all else in the model constant.
 
 
 #### c)
 The p-value associated with age is statistically significant, but the coefficient is so small that the exponentiation values is practically 1, which indicates age is not practically significant when predicting recurrence free survival time in days.  
 
-Both interpretations of hormone are practically significant as well as statistically significant (based on p-values). The AFT interpretation tells us that women receiving hormone therapy live 32% long than those that do not, which is very useful to know. The proportional hazards interpretaiton tells us the same story form the other direction - that women who receive hormone therapy die at a slower rate than those that do not. Both of these interpretations would likely be very significant and meaningful to both patients and physicians.
+Both interpretations (AFT and proportional hazards) of hormone are practically significant as well as statistically significant (based on p-values). The AFT interpretation tells us that women receiving hormone therapy live 32% long than those that do not, which is very useful to know. The proportional hazards interpretaiton tells us the same story form the other direction - that women who receive hormone therapy die at a slower rate than those that do not. Both of these interpretations would likely be very significant and meaningful to both patients and physicians.
 
 #### d)
 Based on AIC, the best distribution to use for the recurrence free survival time should be the generalized gamma distribution.  
@@ -63,16 +62,14 @@ aic$dist <- c("weibull", "exponential", "gamma", "log-logistic", "log-normal", "
 aic <- aic %>% group_by(AIC) %>% arrange(aic) %>% ungroup()
 knitr::kable(aic)
 ```
-
+  
 #### e)
-* __Naive AIC backward Selection__:
+* __Naive AIC backward Selection__:  hormone, size, grade, nodes, prog_recp
 ```{r, echo=T, warning=F}
 weib.fit <- survreg(Surv(gbcs$rectime, gbcs$censrec) ~ age + menopause + hormone + size  + grade + nodes + prog_recp + estrg_recp, data=gbcs, dist="weibull")
 aic.fit <- stepAIC(weib.fit)
 aic.fit$coefficients
-
 ```
-
 
 * __Best Subset Regression__: hormone, size, grade, nodes, prog_recp
 
@@ -89,17 +86,15 @@ if(is.vector(Covs)==FALSE) Formula <- formula(paste("Surv(gbcs$rectime, gbcs$cen
 }
 
 Covariates[1,which(IndMatrix[which(AICvals==min(AICvals)),]==1)]
-
 ```
 
 #### f)
-Based on the high p-value, it does not make sense to add a quadratic size term.
+Based on the high p-value of size^2^, it does not make sense to add a quadratic size term.
 
 ```{r, echo=T, warning=F}
 gbcs$size2 <- gbcs$size*gbcs$size
 weib.fit.f<- survreg(Surv(gbcs$rectime, gbcs$censrec) ~ hormone + size  + grade + nodes + prog_recp + size2, data=gbcs, dist="weibull")
 summary(weib.fit.f)
-
 ```
 
 #### g)
@@ -120,17 +115,15 @@ summary(weib.fit.reg)
 summary(weib.fit.factor)
 
 #rejection region = qchisq(.95, df=2) = 5.991
-
 ```
 
 #### h)
 The plot below indicates the fit is good, but could likely be improved. It underestimates the cumulative hazard at first, then overestimates it. Fitting separate curves for hormone or grade might improve the fit.
 
 ```{r, echo=T, warnings=F}
-fit.final <- flexsurvreg(Surv(gbcs$rectime, gbcs$censrec) ~ hormone + size  + grade + nodes + prog_recp + size2, data=gbcs, dist="weibull")
+fit.final <- flexsurvreg(Surv(gbcs$rectime, gbcs$censrec) ~ hormone + size  + grade + nodes + prog_recp, data=gbcs, dist="weibull")
 km.fit <- survfit(Surv(gbcs$rectime, gbcs$censrec) ~1)
 plot(km.fit, fun="cumhaz", conf.int = F, xlab="Time in Days", ylab="Cumulative Hazard", main="Comparing AFT and K-M Cumulative Hazard")
 lines(fit.final, type="cumhaz", ci=F)
-
 ```
 
