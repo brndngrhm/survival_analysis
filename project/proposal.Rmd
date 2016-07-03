@@ -2,7 +2,7 @@
 title: "Survival Data Analysis Project Proposal"
 author: "Brendan Graham"
 date: "July 6, 2016"
-output: html_document
+output: word_document
 ---
 
 For my survival data analysis project I want to try and model the time until a murder on Game of Thrones (seasons 1-5) using several covariates. The data set I have comes from http://deathtimeline.com/ and, for now, includes 141 observations with variables such as season number, episode number, time of each death, manner of death (murdered or not), house/allegiance of deceased character, and the type of character (supporting, minor or major). I may be getting data for the most recent season (season 6), so the number of observations in my data may increase. In some cases, the house/allegiance was not included, so I also used http://regressing.deadspin.com/valar-morghulis-a-statistical-guide-to-deaths-in-game-1618282560  and http://gameofthrones.wikia.com/ as sources to fill in the gaps. Since not every death that occurs on the show is a murder, there will be some censored variables for deaths that occured due to natural causes or suicide. There are 4 instances of deaths that were not murders, and so there are 4 censored observations.  
