@@ -49,7 +49,7 @@ names(aic)[1] <- "AIC"
 (aic.plot <- ggplot(aic, aes(x=factor(reorder(dist, AIC)), y=AIC, fill=dist)) + geom_bar(stat="identity") + theme_hc() + 
   labs(x="", y="AIC", title="Comparing AIC Scores") + guides(fill=F))
 
-#Building a Model
+#Building a Model ----
 gengamma.fit1 <- flexsurvreg(Surv(deaths$min, deaths$murdered) ~ deaths$season + deaths$episode + deaths$type + factor(deaths$house2), dist="gengamma")
 gengamma.fit1
 
