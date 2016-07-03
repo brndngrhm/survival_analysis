@@ -19,6 +19,7 @@ library(survMisc)
 library(muhaz)
 library(flexsurv)
 library(ggthemes)
+library(MASS)
 
 #load .rda file
 deaths <- load(file = "~/R Working Directory/Villanova/survival_analysis/project/deaths.rda")
@@ -31,13 +32,13 @@ lognorm.fit <- flexsurvreg(Surv(deaths$min, deaths$murdered)~1, dist="lnorm")
 gen.gamma.fit <- flexsurvreg(Surv(deaths$min, deaths$murdered)~1, dist="gengamma")
 loglog.fit <- flexsurvreg(Surv(deaths$min, deaths$murdered)~1, dist="llogis")
 
-plot(exp.fit, conf.int=F, ci=F, mark.time=T, main="Comparing Exponential and K-M Curves", xlab="Time (Min)", ylab="Survival Probability")
-plot(wei.fit, conf.int=F, ci=F, mark.time=T,  main="Comparing Weibull and K-M Curves", xlab="Time (Min)", ylab="Survival Probability")
-plot(gamma.fit, conf.int=F, ci=F, mark.time=T,  main="Comparing Gamma and K-M Curves", xlab="Time (Min)", ylab="Survival Probability")
-plot(lognorm.fit, conf.int=F, ci=F, mark.time=T, main="Comparing Log-Normal and K-M Curves", xlab="Time (Min)", ylab="Survival Probability")
-plot(gen.gamma.fit, conf.int=F, ci=F, mark.time=T, main="Comparing Gen. Gamma and K-M Curves", xlab="Time (Min)", ylab="Survival Probability")
-plot(loglog.fit, conf.int=F, ci=F, mark.time=T, main="Comparing Log-Log and K-M Curves", xlab="Time (Min)", ylab="Survival Probability")
 par(mfrow = c(3,3))
+plot(exp.fit, conf.int=F, ci=F, mark.time=T, main="Exponential and K-M Curves", xlab="Time (Min)", ylab="Survival Probability")
+plot(wei.fit, conf.int=F, ci=F, mark.time=T,  main="Weibull and K-M Curves", xlab="Time (Min)", ylab="Survival Probability")
+plot(gamma.fit, conf.int=F, ci=F, mark.time=T,  main="Gamma and K-M Curves", xlab="Time (Min)", ylab="Survival Probability")
+plot(lognorm.fit, conf.int=F, ci=F, mark.time=T, main="Log-Normal and K-M Curves", xlab="Time (Min)", ylab="Survival Probability")
+plot(gen.gamma.fit, conf.int=F, ci=F, mark.time=T, main="Gen. Gamma and K-M Curves", xlab="Time (Min)", ylab="Survival Probability")
+plot(loglog.fit, conf.int=F, ci=F, mark.time=T, main="Log-Log and K-M Curves", xlab="Time (Min)", ylab="Survival Probability")
 
 #comparing AIC scores
 aic <- as.data.frame(c(exp.fit$AIC, wei.fit$AIC,gamma.fit$AIC,lognorm.fit$AIC,gen.gamma.fit$AIC,loglog.fit$AIC))
@@ -47,3 +48,8 @@ names(aic)[1] <- "AIC"
 
 (aic.plot <- ggplot(aic, aes(x=factor(reorder(dist, AIC)), y=AIC, fill=dist)) + geom_bar(stat="identity") + theme_hc() + 
   labs(x="", y="AIC", title="Comparing AIC Scores") + guides(fill=F))
+
+#Building a Model
+gengamma.fit1 <- flexsurvreg(Surv(deaths$min, deaths$murdered) ~ deaths$season + deaths$episode + deaths$type + factor(deaths$house2), dist="gengamma")
+gengamma.fit1
+
