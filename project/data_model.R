@@ -21,9 +21,6 @@ library(flexsurv)
 library(ggthemes)
 library(MASS)
 
-#load .rda file
-deaths <- load(file = "~/R Working Directory/Villanova/survival_analysis/project/deaths.rda")
-
 #several parametric fits for deaths (no covariates) and their plots and summaries ----
 exp.fit <- flexsurvreg(Surv(deaths$min, deaths$murdered)~1, dist="exponential")
 wei.fit <- flexsurvreg(Surv(deaths$min, deaths$murdered)~1, dist="weibull")
@@ -50,6 +47,8 @@ names(aic)[1] <- "AIC"
   labs(x="", y="AIC", title="Comparing AIC Scores") + guides(fill=F))
 
 #Building a Model ----
-gengamma.fit1 <- flexsurvreg(Surv(deaths$min, deaths$murdered) ~ deaths$season + deaths$episode + deaths$type + factor(deaths$house2), dist="gengamma")
-gengamma.fit1
+gengamma.fit1 <- flexsurvreg(Surv(deaths$min, deaths$murdered) ~ season + episode + type + factor(house2), data=deaths, dist="gengamma")
+gengamma.fit1 # gen. gamma resulted in weird NA values, trying #weibull next
 
+weibull.fit1 <- flexsurvreg(Surv(deaths$min, deaths$murdered) ~ season + episode + type + factor(house2), data=deaths, dist="weibull")
+weibull.fit1
