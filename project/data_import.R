@@ -155,14 +155,8 @@ deaths$min <- minute(deaths$time)
 deaths$house2 <- "Other"
 deaths$house2[deaths$house == "House Stark"] <- "House Stark"
 deaths$house2[deaths$house == "Night's Watch"] <- "Night's Watch"
-deaths$house2[deaths$house == "None/unknown"] <- "None/unknown"
 deaths$house2[deaths$house == "House Lannister"] <- "House Lannister"
-deaths$house2[deaths$house == "Free Folk"] <- "Free Folk"
-deaths$house2[deaths$house == "House Baratheon"] <- "House Baratheon"
 deaths$house2[deaths$house == "House Targaryen"] <- "House Targaryen"
-deaths$house2[deaths$house == "House Bolton"] <- "House Bolton"
-deaths$house2[deaths$house == "Dothraki"] <- "Dothraki"
-deaths$house2[deaths$house == "House Arryn"] <- "House Arryn"
 
 #Save .rda file
 save(deaths, file = "~/R Working Directory/Villanova/survival_analysis/project/deaths.rda")
