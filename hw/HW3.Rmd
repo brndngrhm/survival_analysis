@@ -74,7 +74,7 @@ aic.fit$coefficients
 * __Best Subset Regression__: hormone, size, grade, nodes, prog_recp
 
 ```{r, echo=T, warning=F}
-IndMatrix <- expand.grid(0:1,0:1,0:1,0:1,0:1,0:1,0:1, 0:1)
+IndMatrix <- expand.grid(0:1,0:1,0:1,0:1,0:1,0:1,0:1,0:1)
 Covariates <- gbcs[,3:10]
 AICvals <- rep(0,2^8)
 AICvals[1] <- extractAIC(survreg(Surv(gbcs$rectime, gbcs$censrec) ~ 1, dist="weibull"))[2]
