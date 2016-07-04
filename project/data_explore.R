@@ -210,7 +210,7 @@ mrlife <- function(t, event, censoring){
   print(kmfit, print.rmean = T)
 }
 
-mrlife(10, deaths$min, deaths$murdered) #supposed to look at "restricted mean with upper limit" line????
+mrlife(10, deaths$min, deaths$murdered) #look at rmean entry
 
 #calculating tests comparing curves ----
 # my survival curves have a lot of crossing, not sure if these tests are valid
