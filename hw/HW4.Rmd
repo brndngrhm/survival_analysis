@@ -1,0 +1,68 @@
+---
+title: "HW4"
+author: "Brendan Graham"
+date: "July 7, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(survival)
+library(OIsurv)
+library(KMsurv)
+library(km.ci)
+library(locfit)
+library(dplyr)
+library(survMisc)
+library(flexsurv)
+library(knitr)
+library(MASS)
+library(eha)
+gbcs <- read.table(file = "https://raw.githubusercontent.com/brndngrhm/survival_analysis/master/data/gbcs.txt", header = T, stringsAsFactors = F)
+gbcs <- gbcs %>% dplyr::select(rectime, censrec, age, hormone, size, grade)
+
+```
+
+### 1.
+The estimates in the Cox proportional model are different than the transformed coefficient estimates from the Weibull AFT model. This makes sense given that the Weibull model in the previous homework did not fit the data well.  
+```{r, echo=T}
+prop.haz <- coxph(Surv(gbcs$rectime, gbcs$censrec) ~ age + hormone + size + grade, data=gbcs, ties="breslow")
+summary(prop.haz)
+prop.haz.coef <- data.frame(value = c(0.001444, 0.01419371, 0.399313, -0.33928886 ),
+                            coefficient = c("age", "size", "grade", "hormone"), 
+                            type = "prop.haz")
+wei.coef <- data.frame(value = c(-(-0.00156/0.758), -(-0.01117/0.758), -(-0.31116/0.758), -(0.28084/0.758)),
+                       coefficient = c("age", "size", "grade", "hormone"), 
+                       type="weibull")
+coefs <- left_join(prop.haz.coef, wei.coef, by="coefficient")
+coefs <- coefs %>% dplyr::select(coefficient, value.x, value.y)
+names(coefs)[2] <- "Proportional Hazards"
+names(coefs)[3] <- "Weibull"
+
+knitr::kable(coefs)
+```
+
+###2.
+For every 1 unit increase in tumor grade, we estimate that the rate of dying increases by a factor of e^0.399313^ = `r format(exp(0.399313), digits=4)`, all else in the model constant.  
+A 95% CI for this estimate of grade is (1.2240, 1.8157).
+
+
+###3.
+
+A 95% confidence interval for the hazard ratio for a 10 year increase in age is e^[(10)(0.001444) +/- 10(1.96)(0.100604)]^ = (`r format(exp((10 * 0.001444) - (10 * 1.96 * 0.100604)), digits=4)` , 
+`r format(exp((10 * 0.001444) + (10 * 1.96 * 0.100604)), digits=4)`). We are 95% confident that for every 10 year increase in age, the true rate of dying changes by a factor between (`r format(exp((10 * 0.001444) - (10 * 1.96 * 0.100604)), digits=4)` , 
+`r format(exp((10 * 0.001444) + (10 * 1.96 * 0.100604)), digits=4)`), all else in the mdoel constant.
+
+###4.
+```{r, echo=T}
+prop.haz <- coxph(Surv(gbcs$rectime, gbcs$censrec) ~ age + hormone + size + factor(grade), data=gbcs, ties="breslow")
+summary(prop.haz)
+
+```
+
+###5.
+```{r, echo=T}
+fit.vals <- survfit(prop.haz, newdata=c(age=70, hormone=1, size=15, grade=2))
+
+```
+
+![image](~survival_analysis/hw/hw4_num5.png)
