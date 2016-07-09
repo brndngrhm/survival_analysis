@@ -48,19 +48,27 @@ A 95% CI for this estimate of grade is (1.2240, 1.8157).
 
 ###3.
 
-A 95% confidence interval for the hazard ratio for a 10 year increase in age is e^[(10)(0.001444) +/- 10(1.96)(0.100604)]^ = (`r format(exp((10 * 0.001444) - (10 * 1.96 * 0.100604)), digits=4)` , 
-`r format(exp((10 * 0.001444) + (10 * 1.96 * 0.100604)), digits=4)`). We are 95% confident that for every 10 year increase in age, the true rate of dying changes by a factor between (`r format(exp((10 * 0.001444) - (10 * 1.96 * 0.100604)), digits=4)` , 
-`r format(exp((10 * 0.001444) + (10 * 1.96 * 0.100604)), digits=4)`), all else in the mdoel constant.
+A 95% confidence interval for the hazard ratio for a 10 year increase in age is e^[(10)(0.001444) +/- 10(1.96)(0.006032)]^ = (`r format(exp((10 * 0.001444) - (10 * 1.96 * 0.006032)), digits=4)` , 
+`r format(exp((10 * 0.001444) + (10 * 1.96 * 0.006032)), digits=4)`). We are 95% confident that for every 10 year increase in age, the true rate of dying changes by a factor between (`r format(exp((10 * 0.001444) - (10 * 1.96 * 0.006032)), digits=4)` , 
+`r format(exp((10 * 0.001444) + (10 * 1.96 * 0.006032)), digits=4)`), all else in the model constant.
 
-###4.
+###4.  
+Var(B~Grade_1~ - B~Grade_2~) = Var(B~Grade_1~) + Var(B~Grade_2~) -2Cov(B~Grade_1~ - B~Grade_2~) = `r 6.879734e-02` + `r 1.796197e-02` - `r 2 * 1.308662e-02` = 
+`r 6.879734e-02 + 1.796197e-02 - 2 * 1.308662e-02`.
+
+95% CI for the hazard ratio of having a tumor of grade 1 vs grade 2:
+e^[(-1.071985 + 0.214459) +/- 1.96(`r 6.879734e-02 + 1.796197e-02 -  2 * 1.308662e-02`)]^ = 
+(`r round(exp(-0.857526 - 1.96 * 0.06058607), digits=4)`, `r round(exp(-0.857526 + 1.96 * 0.06058607), digits=4)`).  
+
 ```{r, echo=T}
-prop.haz <- coxph(Surv(gbcs$rectime, gbcs$censrec) ~ age + hormone + size + factor(grade), data=gbcs, ties="breslow")
-summary(prop.haz)
-
+gbcs$grade2_ <- C(factor(gbcs$grade), contr.treatment(3, base=3)) #re-levels "grade" so that 3 is the basline
+prop.haz2 <- coxph(Surv(gbcs$rectime, gbcs$censrec) ~ age + hormone + size + grade2_, data=gbcs, ties="breslow")
+summary(prop.haz2)
+knitr::kable(vcov(prop.haz2))
 ```
 
 ###5.
-A 95% confidnce interval at 500 days for a woman aged 70, receiving hormone therapy, with a tumer of size 15mm and a tumer grade of 2 is (0.818, 0.904).
+A 95% confidence interval at 500 days for a woman aged 70, receiving hormone therapy, with a tumor of size 15mm and a tumor grade of 2 is (0.818, 0.904).
 ```{r, echo=T}
 fit.vals <- survfit(prop.haz, newdata=c(age=70, hormone=1, size=15, grade=2))
 ```
@@ -69,7 +77,8 @@ fit.vals <- survfit(prop.haz, newdata=c(age=70, hormone=1, size=15, grade=2))
 ###6.
 ```{r, echo=T, fig.height=10, fig.width=15}
 prop.haz <- coxph(Surv(gbcs$rectime, gbcs$censrec) ~ age + hormone + size + grade, data=gbcs, ties="breslow")
-plot(survfit(prop.haz, newdata=c(age=mean(gbcs$age), hormone = 1, size=mean(gbcs$size), grade=mean(gbcs$grade))), mark.time=F, conf.int=F, col="Blue")
+plot(survfit(prop.haz, newdata=c(age=mean(gbcs$age), hormone = 1, size=mean(gbcs$size), grade=mean(gbcs$grade))), mark.time=F, conf.int=F, col="Blue",
+     xlab = "Time (days)", ylab = "Survival Probability", main = "Cox P.H. Survival Curves")
 lines(survfit(prop.haz, newdata=c(age=mean(gbcs$age), hormone = 0, size=mean(gbcs$size), grade=mean(gbcs$grade))), mark.time=F, conf.int=F, col="red")
 legend(1000,.8, c("Cox PH survival curve when recieving hormone therapy\n", "Cox PH survival curve when *not* recieving hormone therapy"), lty=c(1,1), col=c("Blue", "red"))
 ```
