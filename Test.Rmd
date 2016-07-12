@@ -1,0 +1,26 @@
+---
+title: "Test"
+author: "Brendan Graham"
+date: "July 18, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(survival)
+library(OIsurv)
+library(KMsurv)
+library(km.ci)
+library(locfit)
+library(dplyr)
+library(survMisc)
+library(flexsurv)
+library(knitr)
+library(MASS)
+library(eha)
+gbcs <- read.table(file = "https://raw.githubusercontent.com/brndngrhm/survival_analysis/master/data/gbcs.txt", header = T, stringsAsFactors = F)
+gbcs <- gbcs %>% dplyr::select(rectime, censrec, age, hormone, size, grade)
+
+
+```
+
+## R Markdown
