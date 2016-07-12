@@ -72,8 +72,7 @@ names(aic)[1] <- "AIC"
 (aic.plot <- ggplot(aic, aes(x=factor(reorder(dist, AIC)), y=AIC, fill=dist)) + geom_bar(stat="identity") + theme_hc() + 
   labs(x="", y="AIC", title="Comparing AIC Scores") + guides(fill=F))
 
-
-#Modelling ----
+#AFT Model ----
 #generalized gamma AFT model based on lowest AIC in previous step
 gengamma.fit1 <- flexsurvreg(Surv(deaths$min, deaths$murdered) ~ season + episode + type + factor(house2), data=deaths, dist="gengamma")
 gengamma.fit #produces NA's, trgin next lowest AIC (Weibull)
@@ -115,7 +114,10 @@ weibull.fit2 <- survreg(Surv(deaths$min, deaths$murdered) ~ type, data=deaths, d
 summary(weibull.fit2)
 
 #check model fit - seems weird,  is it plotting 1 line for each level of type??
-fit.final <- flexsurvreg(Surv(deaths$min, deaths$murdered) ~ type, data=deaths, dist="weibull")
-km.fit <- survfit(Surv(deaths$min, deaths$murdered) ~1)
+fit.final <- flexsurvreg(Surv(deaths$min, deaths$murdered) ~ type2, data=deaths, dist="weibull")
+km.fit <- survfit(Surv(deaths$min, deaths$murdered) ~ 1)
 plot(km.fit, fun="cumhaz", conf.int = FALSE, xlab="Time (Min)", ylab="Cumulative Hazard", main="Comparing AFT and K-M Cumulative Hazard")
 lines(fit.final, type="cumhaz", ci=FALSE)
+
+#Cox PH Model
+
