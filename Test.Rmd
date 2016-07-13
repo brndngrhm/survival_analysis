@@ -17,10 +17,75 @@ library(flexsurv)
 library(knitr)
 library(MASS)
 library(eha)
-gbcs <- read.table(file = "https://raw.githubusercontent.com/brndngrhm/survival_analysis/master/data/gbcs.txt", header = T, stringsAsFactors = F)
-gbcs <- gbcs %>% dplyr::select(rectime, censrec, age, hormone, size, grade)
-
-
+library(muhaz)
+vet <- read.table(file = "https://raw.githubusercontent.com/brndngrhm/survival_analysis/master/Veteran(1).txt", header = T, stringsAsFactors = F)
+names(vet) <- tolower(names(vet))
 ```
 
-## R Markdown
+### 1.
+```{r, echo = T, fig.height=10, fig.width=10}
+#K-M Curve
+std <- vet %>% filter(treatment == 1)
+test <- vet %>% filter(treatment == 2)
+
+std.surv <- Surv(std$time, std$status)
+fit.std.surv  <- survfit(std.surv ~1)
+
+test.surv <- Surv(test$time, test$status)
+fit.test.surv  <- survfit(test.surv ~1)
+
+plot(fit.std.surv, conf.int = F, mark.time = T, main="K-M Survival Curves for Standard and Test Treatments", ylab="Survival probability", xlab="Time Since Start of Trial (days)", col="Blue", lwd=2)
+lines(fit.test.surv, conf.int = F, lwd=2, col="red")
+legend(300, .6, c("Standard\n", "Test"), lwd = c(1,2), col=c("Blue", "red"))
+```
+
+
+Becaus the hazard curves are not parrallel,I do not think a Cox PH model will be reasonable.
+```{r, echo = T, fig.height=10, fig.width=10}
+#Hazard Rate Curves
+haz.std <- muhaz(std$time, std$status)
+haz.test  <- muhaz(test$time, test$status)
+
+plot(haz.test, main="Hazard Rates for Standard and Test Treatments", ylab="Hazard Rate", xlab="Time Since Start of Trial (days)", col="Blue", lwd=2)
+lines(haz.std, lwd=2, col="red")
+legend(50, .002, c("Test", "Standard"), lwd = c(1,2), col=c("Blue", "red"))
+```
+
+#### 2.
+ * a. To test if there is a difference in survival curves for each treatment using a method that weights the differences equally across time I will use a log-rank test, which is the row labeled "1" in the output.    
+Ho: S~standard~(t) = S~test~(t)  
+Ha: S~standard~(t) != S~test~(t)
+```{r, echo=T}
+fit.treatment <- survfit(Surv(vet$time, vet$status) ~ treatment, data=vet)
+fit <- ten(fit.treatment )
+comp(fit)
+```
+Since the survival curves for standard and test treatments cross,  we can look at the results in the second table of the output. Results in the second table for the log rank test show a significant difference between the standard and test curves at at the .05 level (p.val = 0.0268451). Therefore we reject the null and conclude the alternative. We have enough evidence to conclude there is a difference between the survival curves for standard and test treatments at the .05 level.
+
+#email about this intepretation, unreliable in the right tail so does it matter that they cross in right tail??
+
+ * a. To test if there is a difference in survival curves for each treatment using a method that weights earlier times more than later and is robust to different censoring patterns, I will use a Peto-Prentice test, which is the row labeled "S1" in the output.    
+Ho: S~standard~(t) = S~test~(t)  
+Ha: S~standard~(t) != S~test~(t)
+```{r, echo=T}
+fit.treatment <- survfit(Surv(vet$time, vet$status) ~ treatment, data=vet)
+fit <- ten(fit.treatment )
+comp(fit)
+```
+Again, since the survival curves for standard and test treatments cross we can look at the results in the second table of the output. Results in the second table for Peto-Prentice test show a significant difference between the standard and test curves at at the .05 level (p.val = 0.0088831). Therefore we reject the null and conclude the alternative. We have enough evidence to conclude there is a difference between the survival curves for standard and test treatments at the .05 level.
+
+###3. 
+```{r, echo=T}
+km.fit <-  survfit(Surv(vet$time, vet$status) ~ 1, conf.type = "log-log",data=vet)
+summary(km.fit)
+print(km.fit, print.rmean=T)
+
+```
+Based on the R output, the upper bound of a 95% confidence interval for the 60th percentile is 1496, which is the largest value of t such that the pointwise confidence interval for S(t) includes 0.60. The smalest value of t such that the pointwise confidence interval for S(t) includes 0.60 is 704. So a 95% confidence interval for the 60th percentile is (704, 1496).  
+
+An estimate for the mean survival time is 159.2 days.
+
+###4.
+
+
+
