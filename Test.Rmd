@@ -20,72 +20,317 @@ library(eha)
 library(muhaz)
 vet <- read.table(file = "https://raw.githubusercontent.com/brndngrhm/survival_analysis/master/Veteran(1).txt", header = T, stringsAsFactors = F)
 names(vet) <- tolower(names(vet))
+vet <- vet %>% dplyr::select(time, status, treatment, celltype, karno, diagtime, age, prior)
 ```
 
-### 1.
+###1.
+The plot on the left shows the K-M survival curves for each treatment type and the plot on the right shows the hazard rate curves for each treatment type. Because the hazard curves for each treatment are not parrallel, I do not think a Cox PH model will be reasonable.
 ```{r, echo = T, fig.height=10, fig.width=10}
-#K-M Curve
+vet <- read.table(file = "https://raw.githubusercontent.com/brndngrhm/survival_analysis/master/Veteran(1).txt", header = T, stringsAsFactors = F)
+names(vet) <- tolower(names(vet))
+vet <- vet %>% dplyr::select(time, status, treatment, celltype, karno, diagtime, age, prior)
+
 std <- vet %>% filter(treatment == 1)
 test <- vet %>% filter(treatment == 2)
 
-std.surv <- Surv(std$time, std$status)
-fit.std.surv  <- survfit(std.surv ~1)
+#K-M Curve
+fit.std.surv <- survfit(Surv(std$time, std$status)~1)
+fit.test.surv <- survfit(Surv(test$time, test$status) ~1)
 
-test.surv <- Surv(test$time, test$status)
-fit.test.surv  <- survfit(test.surv ~1)
-
-plot(fit.std.surv, conf.int = F, mark.time = T, main="K-M Survival Curves for Standard and Test Treatments", ylab="Survival probability", xlab="Time Since Start of Trial (days)", col="Blue", lwd=2)
-lines(fit.test.surv, conf.int = F, lwd=2, col="red")
-legend(300, .6, c("Standard\n", "Test"), lwd = c(1,2), col=c("Blue", "red"))
-```
-
-
-Becaus the hazard curves are not parrallel,I do not think a Cox PH model will be reasonable.
-```{r, echo = T, fig.height=10, fig.width=10}
 #Hazard Rate Curves
-haz.std <- muhaz(std$time, std$status)
 haz.test  <- muhaz(test$time, test$status)
+haz.std <- muhaz(std$time, std$status)
 
-plot(haz.test, main="Hazard Rates for Standard and Test Treatments", ylab="Hazard Rate", xlab="Time Since Start of Trial (days)", col="Blue", lwd=2)
-lines(haz.std, lwd=2, col="red")
-legend(50, .002, c("Test", "Standard"), lwd = c(1,2), col=c("Blue", "red"))
+#plots
+par(mfrow=c(1,2))
+plot(fit.std.surv, conf.int = F, mark.time = T, main="K-M Survival Curves for \nStandard and Test Treatments", ylab="Survival probability", xlab="Time Since Start of Trial (days)", col="Blue", lwd=2)
+lines(fit.test.surv, conf.int = F, lwd=2, col="red")
+legend(200, .6, c("Standard Treatment", "Test Treatment"), lwd = c(1,2), col=c("Blue", "red"))
+
+plot(haz.test, main="Hazard Rates for \nStandard and Test Treatments", ylab="Hazard Rate", xlab="Time Since Start of Trial (days)", col="red", lwd=2)
+lines(haz.std, lwd=2, col="blue")
+legend(100, .010, c("Standard Treatment", "Test Treatment"), lwd = c(1,2), col=c("Blue", "red"))
 ```
 
-#### 2.
- * a. To test if there is a difference in survival curves for each treatment using a method that weights the differences equally across time I will use a log-rank test, which is the row labeled "1" in the output.    
+
+
+
+###2.
+```{r, echo=T}
+vet <- read.table(file = "https://raw.githubusercontent.com/brndngrhm/survival_analysis/master/Veteran(1).txt", header = T, stringsAsFactors = F)
+names(vet) <- tolower(names(vet))
+vet <- vet %>% dplyr::select(time, status, treatment, celltype, karno, diagtime, age, prior)
+
+fit.treatment <- ten(survfit(Surv(vet$time, vet$status) ~ treatment, data=vet))
+comp(fit.treatment)
+```
+ 
+ * a. To test if there is a difference in survival curves for each treatment type using a method that weights the differences equally across time I will use a log-rank test, which is the row labeled "1" in the output.  
+ 
 Ho: S~standard~(t) = S~test~(t)  
 Ha: S~standard~(t) != S~test~(t)
-```{r, echo=T}
-fit.treatment <- survfit(Surv(vet$time, vet$status) ~ treatment, data=vet)
-fit <- ten(fit.treatment )
-comp(fit)
-```
-Since the survival curves for standard and test treatments cross,  we can look at the results in the second table of the output. Results in the second table for the log rank test show a significant difference between the standard and test curves at at the .05 level (p.val = 0.0268451). Therefore we reject the null and conclude the alternative. We have enough evidence to conclude there is a difference between the survival curves for standard and test treatments at the .05 level.
 
-#email about this intepretation, unreliable in the right tail so does it matter that they cross in right tail??
+p-val = 0.107513
 
- * a. To test if there is a difference in survival curves for each treatment using a method that weights earlier times more than later and is robust to different censoring patterns, I will use a Peto-Prentice test, which is the row labeled "S1" in the output.    
+Since the survival curves for standard and test treatments do not show a lot of crossing we can look at the results in the first table. Results in the first table for the log rank test do not show a significant difference between the standard and test curves at at the .05 level (p.val = 0.107513). Therefore we do not reject the null and do not conclude the alternative. We do not have enough evidence to conclude there is a difference between the survival curves for standard and test treatments at the .05 level.  
+
+
+ * b. To test if there is a difference in survival curves for each treatment using a method that weights earlier times more than later times, and is robust to different censoring patterns, I will use a Peto-Prentice test, which is the row labeled "S1" in the output.  
+ 
 Ho: S~standard~(t) = S~test~(t)  
-Ha: S~standard~(t) != S~test~(t)
-```{r, echo=T}
-fit.treatment <- survfit(Surv(vet$time, vet$status) ~ treatment, data=vet)
-fit <- ten(fit.treatment )
-comp(fit)
-```
-Again, since the survival curves for standard and test treatments cross we can look at the results in the second table of the output. Results in the second table for Peto-Prentice test show a significant difference between the standard and test curves at at the .05 level (p.val = 0.0088831). Therefore we reject the null and conclude the alternative. We have enough evidence to conclude there is a difference between the survival curves for standard and test treatments at the .05 level.
+Ha: S~standard~(t) != S~test~(t)  
+
+p-val = 0.013908  
+
+Results in the first table for Peto-Prentice test suggests difference between the standard and test curves at at the .05 level (p.val = 0.015455). Therefore we reject the null and conclude the alternative. We have enough evidence to conclude there is a difference between the survival curves for standard and test treatments at the .05 level.  
+
+The difference in the outcomes of the two tests could result from the differing censoring patterns within treatment 1 and treatment 2. Looking at the data, the number of censored observations is higher for treatment 1 (7 censored observations) compared to treatment 2 (4 censored observations). Another potential reason could be that the hazard rates are not proportional between those recieving treatment 1 vs those recieving treatment 2. The log-rank test is best suited to cases where the hazard rates are proportional, and since the hazard rate plot showed non proportional hazards, the log rank test may fail to detect a difference in survival curves.
+
+
+
+
 
 ###3. 
+The 60th percentile is the minimum value of t such that the estimated survival probability is less than or equal to (1-(.60/100)) = 0.40, which occurs at t=117. The lower bound of a 95% confidence interval for the 60th percentile is 99 and the upper bound is 156. These bounds are found by looking for every value of t such that the point-wise confidence interval for S(t) includes 0.40.  
+
+An estimate for the mean survival time is 159.2 days.  
+
 ```{r, echo=T}
-km.fit <-  survfit(Surv(vet$time, vet$status) ~ 1, conf.type = "log-log",data=vet)
+vet <- read.table(file = "https://raw.githubusercontent.com/brndngrhm/survival_analysis/master/Veteran(1).txt", header = T, stringsAsFactors = F)
+names(vet) <- tolower(names(vet))
+vet <- vet %>% dplyr::select(time, status, treatment, celltype, karno, diagtime, age, prior)
+km.fit <- (survfit(Surv(vet$time, vet$status) ~ 1, conf.type = "log-log"))
 summary(km.fit)
 print(km.fit, print.rmean=T)
+```
+
+
+
+
+
+
+
+###4. 
+The plot below compares several parametric fits and their AIC values. Based on the AIC values, the distribution I'll use for my best subsets model is the generalized gamma distribution since that has the lowest AIC score compared to the other distributions. 
+
+```{r, echo=T, warning=F, fig.height=10, fig.width=10}
+vet <- read.table(file = "https://raw.githubusercontent.com/brndngrhm/survival_analysis/master/Veteran(1).txt", header = T, stringsAsFactors = F)
+names(vet) <- tolower(names(vet))
+vet <- vet %>% dplyr::select(time, status, treatment, celltype, karno, diagtime, age, prior)
+
+weib.fit <- flexsurvreg(Surv(vet$time, vet$status) ~ 1, data=vet, dist="weibull")
+exp.fit <- flexsurvreg(Surv(vet$time, vet$status) ~ 1, data=vet, dist="exponential")
+gamma.fit <- flexsurvreg(Surv(vet$time, vet$status) ~ 1, data=vet, dist="gamma")
+loglog.fit <- flexsurvreg(Surv(vet$time, vet$status) ~ 1, data=vet, dist="llogis")
+lognorm.fit <- flexsurvreg(Surv(vet$time, vet$status) ~ 1, data=vet, dist="lnorm")
+gengamma.fit <- flexsurvreg(Surv(vet$time, vet$status) ~ 1, data=vet, dist="gengamma")
+
+par(mfrow = c(2,3))
+plot(loglog.fit, conf.int=F, ci = F,main="Log-Log and K-M Curves", xlab="Time (Days)", ylab="Survival Probability")
+legend(600, .6, paste("AIC: ", format(loglog.fit$AIC, digits=6)))
+plot(weib.fit, conf.int=F, ci = F,main="Weibul and K-M Curves", xlab="Time (Days)", ylab="Survival Probability")
+legend(600, .6, paste("AIC: ", format(weib.fit$AIC, digits=6)))
+plot(exp.fit, conf.int=F, ci = F,main="Exponential and K-M Curves", xlab="Time (Days)", ylab="Survival Probability")
+legend(600, .6, paste("AIC: ", format(exp.fit$AIC, digits=6)))
+plot(gamma.fit, conf.int=F, ci = F,main="Gamma and K-M Curves", xlab="Time (Days)", ylab="Survival Probability")
+legend(600, .6, paste("AIC: ", format(gamma.fit$AIC, digits=6)))
+plot(lognorm.fit, conf.int=F, ci = F,main="Log-Normal and K-M Curves", xlab="Time (Days)", ylab="Survival Probability")
+legend(600, .6, paste("AIC: ", format(lognorm.fit$AIC, digits=6)))
+plot(gengamma.fit, conf.int=F, ci = F, main="Gen. Gamma and K-M Curves", xlab="Time (Days)", ylab="Survival Probability")
+legend(600, .6, paste("AIC: ", format(gengamma.fit$AIC, digits=6)))
 
 ```
-Based on the R output, the upper bound of a 95% confidence interval for the 60th percentile is 1496, which is the largest value of t such that the pointwise confidence interval for S(t) includes 0.60. The smalest value of t such that the pointwise confidence interval for S(t) includes 0.60 is 704. So a 95% confidence interval for the 60th percentile is (704, 1496).  
 
-An estimate for the mean survival time is 159.2 days.
+Using AIC criteria, the best subsets regression AFT model includes _treatment_, _celltype_ and _karno_ as predictors.  
 
-###4.
+```{r, echo=T}
+vet$celltype <- as.factor(vet$celltype)
+vet$treatment<- as.factor(vet$treatment)
+IndMatrix <- expand.grid(0:1,0:1,0:1,0:1,0:1,0:1)
+Covariates <- vet[,3:8]
+AICvals <- rep(0,2^6)
+AICvals[1] <- flexsurvreg(Surv(vet$time, vet$status) ~ 1, dist="gengamma")$AIC
+
+for(i in 2:2^6){
+	Covs <- Covariates[,which(IndMatrix[i,]==1)]
+if(is.vector(Covs)==FALSE & is.factor(Covs) == FALSE) Formula <- formula(paste("Surv(vet$time, vet$status) ~ ", paste(Covs, collapse=" + "))) else Formula <- formula(Surv(vet$time, vet$status) ~ Covs)
+	AICvals[i] <- flexsurvreg(Formula, dist="gengamma")$AIC
+}
+
+Covariates[1,which(IndMatrix[which(AICvals==min(AICvals)),]==1)]
+
+```
+
+* a) 
+Fitted AFT model using a generalized gamma distribution:  
+_log(T)_-hat = 3.20269 - 0.54146 * _B~1~_ + 0.02875 * _B~2~_ + 0.65068 * _B~3~_ + 0.25385 * _B~4~_ + 1.13553 * _B~5~_  
+
+Where:  
+_B~1~_ = treatment  
+_B~2~_ = karno  
+_B~3~_ = 1 if cell type is large, 0 otherwise  
+_B~4~_ = 1 if cell type is small, 0 otherwise  
+_B~5~_ = 1 if cell type is squamous, 0 otherwise  
+
+and sigma_hat = 1.03237  
+
+```{r, echo=F}
+vet <- read.table(file = "https://raw.githubusercontent.com/brndngrhm/survival_analysis/master/Veteran(1).txt", header = T, stringsAsFactors = F)
+names(vet) <- tolower(names(vet))
+vet <- vet %>% dplyr::select(time, status, treatment, celltype, karno, diagtime, age, prior)
+final.fit <- flexsurvreg(Surv(vet$time, vet$status) ~ vet$treatment + vet$celltype + vet$karno, dist="gengamma")
+final.fit
+```
+
+* b) 
+Holding all else in the model constant, we estimate that those receiving the test treatment have survival `r format((exp(-0.54146)*100), digits=4)`% that of those not receiving the test treatment, on average.  Based on the fact that those recieving the test treatment do not seem survive as long as those recieving the standard treatment I would not recommend the test treatment be used. The test treatment seems to be doing worse than the standard treatment.
+
+
+
+
+
+
+
+###5.
+
+* a)
+The plots below show AFT survival curves overlaid on top of K-M survival curves for each treatment type (standard=1 and test=2) at each cell size (squamous, small, adeno, large), while using the mean karno score. Overall, I think the AFT model fits poorly. The 4 red plots show comparisons of K-M and AFT survival curves at the different cell sizes holding treatment = 1 and using the mean karno score. The lower left plot looks like a reasonably good fit, but the other 3 show a poor fitting AFT model. The dashed lines representing the AFT survival curves do not really follow the solid K-M survival curves very closely. Similarly, the 4 blue plots showing comparisons of K-M and AFT survival curves at the different cell sizes holding treatment = 2 and using the mean karno score also indicate a poor fitting model. Again the dashed AFT survival curves do not follow the solid K-M survival curves very closely.
+
+```{r, echo=T, fig.width=15, fig.height=10}
+vet <- read.table(file = "https://raw.githubusercontent.com/brndngrhm/survival_analysis/master/Veteran(1).txt", header = T, stringsAsFactors = F)
+names(vet) <- tolower(names(vet))
+vet <- vet %>% dplyr::select(time, status, treatment, celltype, karno, diagtime, age, prior)
+
+final.fit <- flexsurvreg(Surv(vet$time, vet$status) ~ treatment + celltype + karno, data=vet, dist="gengamma")
+
+km.fit1 <-  survfit(Surv(subset(vet$time, vet$treatment == 1 & vet$celltype == "squamous"), subset(vet$status, vet$treatment == 1 & vet$celltype == "squamous")) ~ 1, conf.type = "log-log", data=vet)
+km.fit2 <-  survfit(Surv(subset(vet$time, vet$treatment == 1 & vet$celltype == "smallcell"), subset(vet$status, vet$treatment == 1 & vet$celltype == "smallcell")) ~ 1, conf.type = "log-log", data=vet)
+km.fit3 <-  survfit(Surv(subset(vet$time, vet$treatment == 1 & vet$celltype == "adeno"), subset(vet$status, vet$treatment == 1 & vet$celltype == "adeno")) ~ 1, conf.type = "log-log", data=vet)
+km.fit4 <-  survfit(Surv(subset(vet$time, vet$treatment == 1 & vet$celltype == "large"), subset(vet$status, vet$treatment == 1 & vet$celltype == "large" )) ~ 1, conf.type = "log-log", data=vet)
+
+km.fit5 <-  survfit(Surv(subset(vet$time, vet$treatment == 2 & vet$celltype == "squamous"), subset(vet$status, vet$treatment == 2 & vet$celltype == "squamous")) ~ 1, conf.type = "log-log", data=vet)
+km.fit6 <-  survfit(Surv(subset(vet$time, vet$treatment == 2 & vet$celltype == "smallcell"), subset(vet$status, vet$treatment ==2 & vet$celltype == "smallcell")) ~ 1, conf.type = "log-log", data=vet)
+km.fit7 <-  survfit(Surv(subset(vet$time, vet$treatment == 2 & vet$celltype == "adeno"), subset(vet$status, vet$treatment == 2 & vet$celltype == "adeno")) ~ 1, conf.type = "log-log", data=vet)
+km.fit8 <-  survfit(Surv(subset(vet$time, vet$treatment == 2 & vet$celltype == "large"), subset(vet$status, vet$treatment == 2 & vet$celltype == "large" )) ~ 1, conf.type = "log-log", data=vet)
+
+par(mfrow = c(2,2))
+plot(km.fit1, conf.int=F, main="Comparing AFT and K-M Survival Curves Where \n Treatment=1 & Cell Size = Squamous", ylab="Estimated Survival", xlab="Time Since Start of Trial (days)", col="red", lwd=2)
+lines(final.fit, newdata = data.frame(treatment = 1, celltype = "squamous", karno = mean(vet$karno)), ci=F, col='red', lty=2, type="survival")
+legend(300, .8, c("AFT Surv for Trt 1"), lwd = 2, lty=2, col="red")
+
+plot(km.fit2, conf.int=F, main="Comparing AFT and K-M Survival Curves  Where \n Treatment=1 & Cell Size = Small", ylab="Estimated Survival", xlab="Time Since Start of Trial (days)", col="red", lwd=2)
+lines(final.fit, newdata = data.frame(treatment = 1, celltype = "smallcell", karno = mean(vet$karno)), ci=F, col='red', lty=2, type="survival")
+legend(300, .8, c("AFT Surv for Trt 1"), lwd = 2, lty=2, col="red")
+
+plot(km.fit3, conf.int=F, main="Comparing AFT and K-M Survival Curves by  Where \n Treatment=1 & Cell Size = Adeno", ylab="Estimated Survival", xlab="Time Since Start of Trial (days)", col="red", lwd=2)
+lines(final.fit, newdata = data.frame(treatment = 1, celltype = "adeno", karno = mean(vet$karno)), ci=F, col='red', lty=2, type="survival")
+legend(200, .8, c("AFT Surv for Trt 1"), lwd = 2, lty=2, col="red")
+
+plot(km.fit4, conf.int=F, main="Comparing AFT and K-M Survival Curves by  Where \n Treatment=1 & Cell Size = Large", ylab="Estimated Survival", xlab="Time Since Start of Trial (days)", col="red", lwd=2)
+lines(final.fit, newdata = data.frame(treatment = 1, celltype = "large", karno = mean(vet$karno)), ci=F, col='red', lty=2, type="survival")
+legend(300, .8, c("AFT Surv for Trt 1"), lwd =2, lty=2, col="red")
+
+
+par(mfrow = c(2,2))
+plot(km.fit5, conf.int=F, main="Comparing AFT and K-M Survival Curves Where \n Treatment=2 & Cell Size = Squamous", ylab="Estimated Survival", xlab="Time Since Start of Trial (days)", col="blue", lwd=2)
+lines(final.fit, newdata = data.frame(treatment = 2, celltype = "squamous", karno = mean(vet$karno)), ci=F, col='blue', lty=2, type="survival")
+legend(300, .8, c("AFT Surv for Trt 2"), lwd = 2, lty=2, col="blue")
+
+plot(km.fit6, conf.int=F, main="Comparing AFT and K-M Survival Curves Where \n Treatment=2 & Cell Size = Small", ylab="Estimated Survival", xlab="Time Since Start of Trial (days)", col="blue", lwd=2)
+lines(final.fit, newdata = data.frame(treatment = 2, celltype = "smallcell", karno = mean(vet$karno)), ci=F, col='blue', lty=2, type="survival")
+legend(300, .8, c("AFT Surv for Trt 2"), lwd = 2, lty=2, col="blue")
+
+plot(km.fit7, conf.int=F, main="Comparing AFT and K-M Survival Curves Where \n Treatment=2 & Cell Size = Adeno", ylab="Estimated Survival", xlab="Time Since Start of Trial (days)", col="blue", lwd=2)
+lines(final.fit, newdata = data.frame(treatment = 2, celltype = "adeno", karno = mean(vet$karno)), ci=F, col='blue', lty=2, type="survival")
+legend(100, .8, c("AFT Surv for Trt 2"), lwd = 2, lty=2, col="blue")
+
+plot(km.fit8, conf.int=F, main="Comparing AFT and K-M Survival Curves Where \n Treatment=2  & Cell Size = Large", ylab="Estimated Survival", xlab="Time Since Start of Trial (days)", col="blue", lwd=2)
+lines(final.fit, newdata = data.frame(treatment = 2, celltype = "large", karno = mean(vet$karno)), ci=F, col='blue', lty=2, type="survival")
+legend(300, .8, c("AFT Surv for Trt 2"), lwd = 2, lty=2, col="blue")
+```
+
+* b) (alternative question since I couln't get SAS to open) Determine the two most influential observations based on the dfbetas and the ldcase methods.  Describe why these individuals may be the most influential and whether it seems like a good idea to refit the model without them in the data set.
+
+df beta method:
+
+```{r, echo=T}
+vet <- read.table(file = "https://raw.githubusercontent.com/brndngrhm/survival_analysis/master/Veteran(1).txt", header = T, stringsAsFactors = F)
+names(vet) <- tolower(names(vet))
+vet <- vet %>% dplyr::select(time, status, treatment, celltype, karno, diagtime, age, prior)
+
+final.fit2 <- survreg(Surv(vet$time, vet$status) ~ treatment + celltype + karno, data=vet, dist="weibull")
+
+#dfbetas
+dfb <- residuals(final.fit2, type="dfbetas")
+eff.samp <- ((137-11) + 137)/2 #effective sample size = 131.5
+
+(intercept <- cbind(vet[,c(1:5)], dfb[,1])[which(dfb[,1] > 2 / sqrt(eff.samp)),])
+(trt <- cbind(vet[,c(1:5)], dfb[,2])[which(dfb[,2] > 2 / sqrt(eff.samp)),])
+(celltype <- cbind(vet[,c(1:5)], dfb[,3])[which(dfb[,3] > 2 / sqrt(eff.samp)),])
+(karno <- cbind(vet[,c(1:5)], dfb[,4])[which(dfb[,4] > 2 / sqrt(eff.samp)),])
+
+
+#ldcase top 2
+ld <-  residuals(final.fit2, type="ldcase")
+cbind(vet[order(ld, decreasing=T), c(1:5)], sort(ld, decreasing = T))[1:2,]
+
+```
+
+
+
+
+
+###6.
+```{r, echo=T}
+vet <- read.table(file = "https://raw.githubusercontent.com/brndngrhm/survival_analysis/master/Veteran(1).txt", header = T, stringsAsFactors = F)
+names(vet) <- tolower(names(vet))
+vet <- vet %>% dplyr::select(time, status, treatment, celltype, karno, diagtime, age, prior)
+
+prop.haz <- coxph(Surv(vet$time, vet$status) ~ treatment + karno + diagtime + prior, data=vet, ties="breslow")
+summary(prop.haz)
+```
+
+* a) 
+*Prior:* All else in the model constant, we estimate that those with prior therapy die from lung cancer at a rate that is e^-0.094586^ = 0.9097 times that of those who did not recieve prior therapy.  
+
+*Diagtime:* For every 1 week increase in time from diagnosis to entry into the study, we estimate that the rate of dying increases by a factor of e^0.004814^ = 1.005, all else in the model constant.  
+
+* b) 
+A 95% confidence interval for the hazard ratio for a 10 point increase in Karnofsky score is (e^(10(-0.026818) +/- 10(1.96)(0.005040))^ = e^(-0.26818 +/- 0.098784) = (0.693, 0.844), holding all else in the model constant.  
+
+* c) 
+The survival probability at time 200 for a patient on treatment 2 with no prior treatment who was diagnosed 4 weeks prior to enry and had a Karnofsyky score of 70 is 0.21973.
+```{r, echo=T}
+vet <- read.table(file = "https://raw.githubusercontent.com/brndngrhm/survival_analysis/master/Veteran(1).txt", header = T, stringsAsFactors = F)
+names(vet) <- tolower(names(vet))
+vet <- vet %>% dplyr::select(time, status, treatment, celltype, karno, diagtime, age, prior)
+
+fit.vals <- survfit(prop.haz, newdata=c(treatment=2, prior=0, diagtime=4, karno=70))
+summary(fit.vals)
+```
+
+* d) 
+Ho: B~diagtime~ = B~prior~ = 0  
+Ha: At least 1 equality in ho not true
+
+LRT stat=-2*(-488.5494 - (-488.3731)) = 0.3526
+
+p-val=`r 1-pchisq(0.3526, 2)`
+
+Conclusion: Since p-val = 0.8383664 > 0.05 we do not reject Ho and do not conclude Ha. It does not seem that diagtime and prior are needed in the model.
+
+```{r, echo=T}
+vet <- read.table(file = "https://raw.githubusercontent.com/brndngrhm/survival_analysis/master/Veteran(1).txt", header = T, stringsAsFactors = F)
+names(vet) <- tolower(names(vet))
+vet <- vet %>% dplyr::select(time, status, treatment, celltype, karno, diagtime, age, prior)
+
+prop.haz <- coxph(Surv(vet$time, vet$status) ~ treatment + karno + diagtime + prior, data=vet, ties="breslow")
+prop.haz2 <- coxph(Surv(vet$time, vet$status) ~ treatment + karno, data=vet, ties="breslow")
+
+prop.haz$loglik[2]
+prop.haz2$loglik[2]
+
+```
 
 
 
