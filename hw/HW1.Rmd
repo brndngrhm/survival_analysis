@@ -2,7 +2,7 @@
 title: 'Survival Data Analysis HW #1'
 author: "Brendan Graham"
 date: "June 20, 2016"
-output: word_document
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
@@ -25,7 +25,8 @@ wha <- wha %>% select(age, gender, lenfol, fstat)
  
 ```{r, echo=T, fig.height=8, fig.width=8}
 wha.surv <- Surv(wha$lenfol, wha$fstat)
-fit <- survfit(wha.surv~1)
+fit <- survfit(wha.surv~1, conf.type="log-log")
+summary(fit)
 surv.plot <- plot(fit, conf.int = T, xlab = "Number of days followed since MI",
              ylab = "Survival Probability", main = "K-M Survival Curve of Heart Attack Survivors")
 conf.bands <- km.ci(fit, method="loghall")
@@ -94,7 +95,7 @@ fit.gender <- survfit(wha.surv ~ gender, data=wha)
 fit <- ten(fit.gender)
 comp(fit)
 ```
-Since the survival curve for men and women do not cross we can just look at the results in the first table. Results in the first table from the 6 tests all show a significant difference between the male and females curves at at the .05 level. Therefore we reject the null and conclude the alternative. We have enough evidence to conclude there is a difference between the survival curves for men and women at the .05 level. Based on the survival plots in part (e), males have higher survival probability.
+Since the survival curve for standard and test treatments cross,  we can look at the results in the second table of the output. Results in the second table  for the log rank test show a significant difference between the male and females curves at at the .05 level. Therefore we reject the null and conclude the alternative. We have enough evidence to conclude there is a difference between the survival curves for men and women at the .05 level. Based on the survival plots in part (e), males have higher survival probability.
 
 #### g)
 Ho: S~50 or less~(t) = S~Between 50 and 75~(t) = S~75 or Greater~(t)  
