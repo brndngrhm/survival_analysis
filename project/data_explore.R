@@ -23,7 +23,7 @@ library(ggthemes)
 #load .rda file
 deaths <- load(file = "~/R Working Directory/Villanova/survival_analysis/project/deaths.rda")
 
-#ggsurv function ----
+#ggsurv function I found online (for cool looking survival plots)----
 ggsurv <- function(s, CI = 'def', plot.cens = T, surv.col = 'gg.def',
                    cens.col = 'red', lty.est = 1, lty.ci = 2,
                    cens.shape = 3, back.white = F, xlab = 'Time',
@@ -180,12 +180,9 @@ min <- deaths %>% group_by(min) %>% summarise(total = sum(murdered))
   labs(x="\nMinute", y="", title="Total Murders by Minute"))
 
 #plot K-M survival curves ----
-death.surv <- Surv(deaths$time, deaths$murdered)
+death.surv <- Surv(deaths$min, deaths$murdered)
 fit <- survfit(death.surv~1, data=deaths)
-plot(fit, main="Survival Curve for GoT Murders (Seasons 1-5)", xlab = "Minute", ylab = "Survival Probability")
-conf.bands <- km.ci(fit, method = "loghall")
-lines(conf.bands, lty=3, col="red")
-legend(40, .8, c("K-M Curve"," Pointwise CI", "Simultaneous CB"), lty=c(1,2,3))
+plot(fit, conf.int = F, mark.time = T, main="Survival Curve for GoT Murders (Seasons 1-5)", xlab = "Minute", ylab = "Survival Probability", col="Blue")
 
 fit.season <- survfit(death.surv~season, data=deaths)
 ggsurv(fit.season) + labs(x="Time (Minutes)",  y="Survival Probability", title = "Survival Curves for GoT Murders by Season")
@@ -210,20 +207,20 @@ mrlife <- function(t, event, censoring){
   print(kmfit, print.rmean = T)
 }
 
-mrlife(10, deaths$min, deaths$murdered) #look at rmean entry
+mrlife(40, deaths$min, deaths$murdered) #look at rmean entry
 
 #calculating tests comparing curves ----
 # my survival curves have a lot of crossing, not sure if these tests are valid
-season.comp <- ten(survfit(Surv(deaths$time, deaths$murdered)~deaths$season))
+season.comp <- ten(survfit(Surv(deaths$min, deaths$murdered)~deaths$season))
 comp(season.comp)
 
-ep.comp <- ten(survfit(Surv(deaths$time, deaths$murdered)~deaths$episode))
+ep.comp <- ten(survfit(Surv(deaths$min, deaths$murdered)~deaths$episode))
 comp(ep.comp) #shows sig difference
 
-type.comp <- ten(survfit(Surv(deaths$time, deaths$murdered)~deaths$type))
+type.comp <- ten(survfit(Surv(deaths$min, deaths$murdered)~deaths$type))
 comp(type.comp)
 
-house.comp <- ten(survfit(Surv(deaths$time, deaths$murdered)~deaths$house2))
+house.comp <- ten(survfit(Surv(deaths$min, deaths$murdered)~deaths$house2))
 comp(house.comp)
 
 #hazard rate (Nelson - Aalen Estimator),  est. culumative hazard function & regular hazard function ----
@@ -242,5 +239,16 @@ plot(NA.fit, fun="cumhaz", mark.time=F, conf.int=F,
 
 #hazard function
 haz <- muhaz(deaths$min, deaths$murdered)
-plot(haz, main="Estimated Hazard Function", xlab="Time (Min)", ylab="Hazard Rate")
+plot(haz, main="Estimated Hazard Function", xlab="Time (Min)", ylab="Hazard Rate", col="Blue")
+
+#hazard rates for each type of character
+haz.minor  <- muhaz(deaths$min[deaths$type == "minor"], deaths$murdered[deaths$type == "minor"])
+haz.supporting  <- muhaz(deaths$min[deaths$type == "supporting"], deaths$murdered[deaths$type == "supporting"])
+haz.main  <- muhaz(deaths$min[deaths$type == "main"], deaths$murdered[deaths$type == "main"])
+
+plot(haz.minor, main="Hazard Rates for \nDiff. Character Types", ylab="Hazard Rate", xlab="Time (min)", col="blue", lwd=2)
+lines(haz.main, lwd=2, col="red")
+lines(haz.supporting, lwd=2, col="green")
+legend(10, .15, c("Minor", "Main", "Supporting"), lwd = c(2,2,2), col=c("Blue", "red", "Green"))
+
 
