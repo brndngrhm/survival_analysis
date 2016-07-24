@@ -1,0 +1,458 @@
+---
+title: "Code for report"
+author: "Brendan Graham"
+date: "July 24, 2016"
+output: html_document
+---
+
+```{r, echo=T, warnings = F}
+##########################################
+#loading data & formatting
+##########################################
+
+#data sources ----
+#http://deathtimeline.com/ -> for season, ep, name, time, killed by, and type
+#http://regressing.deadspin.com/valar-morghulis-a-statistical-guide-to-deaths-in-game-1618282560  -> for allegiance/house
+#http://gameofthrones.wikia.com/  -> for allegiance/house 
+#http://www.r-statistics.com/2013/07/creating-good-looking-survival-curves-the-ggsurv-function/  -> for ggsurv function
+
+#packages ----
+library(dplyr)
+library(ggplot2)
+library(ggthemes)
+library(rvest)
+library(survival)
+library(nlme)
+library(lubridate)
+library(locfit)
+library(survMisc)
+library(muhaz)
+library(flexsurv)
+library(ggthemes)
+library(MASS)
+
+#load & format data ----
+deaths <- read.csv(file = "https://raw.githubusercontent.com/brndngrhm/survival_analysis/master/project/deaths.csv", header = T, strip.white = T)
+deaths$time <- ms(deaths$time)
+deaths$min <- minute(deaths$time)
+
+#collapse "House" Variable
+deaths$house2 <- "Other"
+deaths$house2[deaths$house == "House Stark"] <- "House Stark"
+deaths$house2[deaths$house == "Night's Watch"] <- "Night's Watch"
+deaths$house2[deaths$house == "House Lannister"] <- "House Lannister"
+deaths$house2[deaths$house == "House Targaryen"] <- "House Targaryen"
+
+
+##########################################
+#exploring the data
+##########################################
+
+#ggsurv function I found online (for cool looking survival plots)----
+ggsurv <- function(s, CI = 'def', plot.cens = T, surv.col = 'gg.def',
+                   cens.col = 'red', lty.est = 1, lty.ci = 2,
+                   cens.shape = 3, back.white = F, xlab = 'Time',
+                   ylab = 'Survival', main = ''){
+  
+  library(ggplot2)
+  strata <- ifelse(is.null(s$strata) ==T, 1, length(s$strata))
+  stopifnot(length(surv.col) == 1 | length(surv.col) == strata)
+  stopifnot(length(lty.est) == 1 | length(lty.est) == strata)
+  
+  ggsurv.s <- function(s, CI = 'def', plot.cens = T, surv.col = 'gg.def',
+                       cens.col = 'red', lty.est = 1, lty.ci = 2,
+                       cens.shape = 3, back.white = F, xlab = 'Time',
+                       ylab = 'Survival', main = ''){
+    
+    dat <- data.frame(time = c(0, s$time),
+                      surv = c(1, s$surv),
+                      up = c(1, s$upper),
+                      low = c(1, s$lower),
+                      cens = c(0, s$n.censor))
+    dat.cens <- subset(dat, cens != 0)
+    
+    col <- ifelse(surv.col == 'gg.def', 'black', surv.col)
+    
+    pl <- ggplot(dat, aes(x = time, y = surv)) +
+      xlab(xlab) + ylab(ylab) + ggtitle(main) +
+      geom_step(col = col, lty = lty.est)
+    
+    pl <- if(CI == T | CI == 'def') {
+      pl + geom_step(aes(y = up), color = col, lty = lty.ci) +
+        geom_step(aes(y = low), color = col, lty = lty.ci)
+    } else (pl)
+    
+    pl <- if(plot.cens == T & length(dat.cens) > 0){
+      pl + geom_point(data = dat.cens, aes(y = surv), shape = cens.shape,
+                      col = cens.col)
+    } else if (plot.cens == T & length(dat.cens) == 0){
+      stop ('There are no censored observations')
+    } else(pl)
+    
+    pl <- if(back.white == T) {pl + theme_bw()
+    } else (pl)
+    pl
+  }
+  
+  ggsurv.m <- function(s, CI = 'def', plot.cens = T, surv.col = 'gg.def',
+                       cens.col = 'red', lty.est = 1, lty.ci = 2,
+                       cens.shape = 3, back.white = F, xlab = 'Time',
+                       ylab = 'Survival', main = '') {
+    n <- s$strata
+    
+    groups <- factor(unlist(strsplit(names
+                                     (s$strata), '='))[seq(2, 2*strata, by = 2)])
+    gr.name <-  unlist(strsplit(names(s$strata), '='))[1]
+    gr.df <- vector('list', strata)
+    ind <- vector('list', strata)
+    n.ind <- c(0,n); n.ind <- cumsum(n.ind)
+    for(i in 1:strata) ind[[i]] <- (n.ind[i]+1):n.ind[i+1]
+    
+    for(i in 1:strata){
+      gr.df[[i]] <- data.frame(
+        time = c(0, s$time[ ind[[i]] ]),
+        surv = c(1, s$surv[ ind[[i]] ]),
+        up = c(1, s$upper[ ind[[i]] ]),
+        low = c(1, s$lower[ ind[[i]] ]),
+        cens = c(0, s$n.censor[ ind[[i]] ]),
+        group = rep(groups[i], n[i] + 1))
+    }
+    
+    dat <- do.call(rbind, gr.df)
+    dat.cens <- subset(dat, cens != 0)
+    
+    pl <- ggplot(dat, aes(x = time, y = surv, group = group)) +
+      xlab(xlab) + ylab(ylab) + ggtitle(main) +
+      geom_step(aes(col = group, lty = group))
+    
+    col <- if(length(surv.col == 1)){
+      scale_colour_manual(name = gr.name, values = rep(surv.col, strata))
+    } else{
+      scale_colour_manual(name = gr.name, values = surv.col)
+    }
+    
+    pl <- if(surv.col[1] != 'gg.def'){
+      pl + col
+    } else {pl + scale_colour_discrete(name = gr.name)}
+    
+    line <- if(length(lty.est) == 1){
+      scale_linetype_manual(name = gr.name, values = rep(lty.est, strata))
+    } else {scale_linetype_manual(name = gr.name, values = lty.est)}
+    
+    pl <- pl + line
+    
+    pl <- if(CI == T) {
+      if(length(surv.col) > 1 && length(lty.est) > 1){
+        stop('Either surv.col or lty.est should be of length 1 in order
+             to plot 95% CI with multiple strata')
+      }else if((length(surv.col) > 1 | surv.col == 'gg.def')[1]){
+        pl + geom_step(aes(y = up, color = group), lty = lty.ci) +
+          geom_step(aes(y = low, color = group), lty = lty.ci)
+      } else{pl +  geom_step(aes(y = up, lty = group), col = surv.col) +
+          geom_step(aes(y = low,lty = group), col = surv.col)}
+    } else {pl}
+    
+    
+    pl <- if(plot.cens == T & length(dat.cens) > 0){
+      pl + geom_point(data = dat.cens, aes(y = surv), shape = cens.shape,
+                      col = cens.col)
+    } else if (plot.cens == T & length(dat.cens) == 0){
+      stop ('There are no censored observations')
+    } else(pl)
+    
+    pl <- if(back.white == T) {pl + theme_bw()
+    } else (pl)
+    pl
+  }
+  pl <- if(strata == 1) {ggsurv.s(s, CI , plot.cens, surv.col ,
+                                  cens.col, lty.est, lty.ci,
+                                  cens.shape, back.white, xlab,
+                                  ylab, main)
+  } else {ggsurv.m(s, CI, plot.cens, surv.col ,
+                   cens.col, lty.est, lty.ci,
+                   cens.shape, back.white, xlab,
+                   ylab, main)}
+  pl
+}
+
+#organize into subsets ----
+ep <- deaths %>% group_by(episode) %>% summarise(total = sum(murdered))
+season <- deaths %>% group_by(season) %>% summarise(total = sum(murdered))
+house2 <- deaths %>% group_by(house2) %>% summarise(total = sum(murdered)) %>% ungroup() %>% arrange(desc(total))
+type <-  deaths %>% group_by(type) %>% summarise(total = sum(murdered)) %>% ungroup() %>% arrange(desc(total))
+censored <- deaths %>% group_by(murdered) %>% summarise(total = n()) %>% ungroup() %>% arrange(desc(total))
+min <- deaths %>% group_by(min) %>% summarise(total = sum(murdered))
+
+#summary plots ----
+(season.plot <- ggplot(season, aes(x=as.factor(season), y=total)) + 
+   geom_bar(stat="identity") + theme_hc()+ 
+   labs(x="\n Season", y="", title="Total Murders by Season"))
+
+(ep.plot <- ggplot(ep, aes(x=as.factor(episode), y=total)) + 
+  geom_bar(stat="identity") + theme_hc() + 
+  labs(x="\nEpisode", y="", title="Total Murders by Episode Number"))
+
+(house.plot <- ggplot(house2, aes(x=reorder(as.factor(house2), total), y=total)) + 
+  geom_bar(stat="identity") + coord_flip() + theme_hc() + 
+  labs(x="\nHouse", y="", title="Total Murders by House"))
+
+(type.plot <- ggplot(type, aes(x=reorder(as.factor(type), -total), y=total)) + 
+  geom_bar(stat="identity")+ theme_hc() + 
+  labs(x="\nCharacter Role", y="", title="Total Murders by Role"))
+
+(min.plot <- ggplot(min, aes(x=min, y=total)) + 
+  geom_bar(stat="identity")+ theme_hc() + 
+  labs(x="\nMinute", y="", title="Total Murders by Minute"))
+
+#plot K-M survival curves ----
+death.surv <- Surv(deaths$min, deaths$murdered)
+fit <- survfit(death.surv~1, data=deaths)
+plot(fit, conf.int = F, mark.time = T, main="Survival Curve for GoT Murders (Seasons 1-5)", xlab = "Minute", ylab = "Survival Probability", col="Blue")
+
+fit.season <- survfit(death.surv~season, data=deaths)
+ggsurv(fit.season) + labs(x="Time (Minutes)",  y="Survival Probability", title = "Survival Curves for GoT Murders by Season")
+
+fit.ep <- survfit(death.surv~episode, data=deaths)
+ggsurv(fit.ep) + labs(x="Time (Minutes)",  y="Survival Probability", title = "Survival Curves for GoT Murders by Episode Number")
+
+fit.type <- survfit(death.surv~type, data=deaths)
+ggsurv(fit.type) + labs(x="Time (Minutes)",  y="Survival Probability", title = "Survival Curves for GoT Murders by Character Type")
+
+fit.house <- survfit(death.surv~house2, data=deaths)
+ggsurv(fit.house) + labs(x="Time (Minutes)", y="Survival Probability", title = "Survival Curves for GoT Murders by House")
+
+#estimated percentiles, mean, mean resid life for deaths ----
+summary(fit) #k-m values in table form
+quantile(fit, probs=c(.25, .5, .75)) #estimates and conf int for percentiles
+print(fit, print.rmean=T) #Mean for restricted survival curve
+
+#mrlife function for mean resid life at a specific time - DOESN'T SEEM TO MATCH PLOT OR MRL TABLE
+mrlife <- function(t, event, censoring){
+  kmfit <- survfit(Surv(event[event>t]-t, censoring[event>t])~1, conf.type="log-log")
+  print(kmfit, print.rmean = T)
+}
+
+mrlife(40, deaths$min, deaths$murdered) #look at rmean entry
+
+#calculating tests comparing curves ----
+season.comp <- ten(survfit(Surv(deaths$min, deaths$murdered)~deaths$season))
+comp(season.comp)
+
+ep.comp <- ten(survfit(Surv(deaths$min, deaths$murdered)~deaths$episode))
+comp(ep.comp) #shows sig difference
+
+type.comp <- ten(survfit(Surv(deaths$min, deaths$murdered)~deaths$type))
+comp(type.comp)
+
+house.comp <- ten(survfit(Surv(deaths$min, deaths$murdered)~deaths$house2))
+comp(house.comp)
+
+#hazard rate (Nelson - Aalen Estimator),  est. culumative hazard function & regular hazard function ----
+NA.fit <- survfit(coxph(Surv(deaths$time, deaths$murdered)~1), type = "aalen")
+summary(NA.fit)
+
+plot(NA.fit, conf.int = F, mark.time=T,  main = "K-M and N-A Estimated Survival Curves", 
+     xlab="Time(Min)", ylab="Survival Probability", col="red")
+lines(fit, conf.int = F)
+legend(50, 0.7, c("K-M", "N-A"), lty=c(1, 1), col=c("black", "red"))
+
+#culumative hazard function
+plot(NA.fit, fun="cumhaz", mark.time=F, conf.int=F, 
+     main="Estimated Cumulative Hazard Function", 
+     xlab="Time (Min)", ylab="Cumulative Hazard")
+
+#hazard function
+haz <- muhaz(deaths$min, deaths$murdered)
+plot(haz, main="Estimated Hazard Function", xlab="Time (Min)", ylab="Hazard Rate", col="Blue")
+
+#hazard rates for each type of character
+haz.minor  <- muhaz(deaths$min[deaths$type == "minor"], deaths$murdered[deaths$type == "minor"])
+haz.supporting  <- muhaz(deaths$min[deaths$type == "supporting"], deaths$murdered[deaths$type == "supporting"])
+haz.main  <- muhaz(deaths$min[deaths$type == "main"], deaths$murdered[deaths$type == "main"])
+
+plot(haz.minor, main="Hazard Rates for \nDiff. Character Types", ylab="Hazard Rate", xlab="Time (min)", col="blue", lwd=2)
+lines(haz.main, lwd=2, col="red")
+lines(haz.supporting, lwd=2, col="green")
+legend(10, .15, c("Minor", "Main", "Supporting"), lwd = c(2,2,2), col=c("Blue", "red", "Green"))
+
+
+##########################################
+#Modelling the data
+##########################################
+
+
+#several parametric fits for deaths (no covariates) and their plots and summaries ----
+exp.fit <- flexsurvreg(Surv(deaths$min, deaths$murdered)~ episode + factor(house2) + type, data = deaths,dist="exponential")
+wei.fit <- flexsurvreg(Surv(deaths$min, deaths$murdered)~ episode + factor(house2) + type,  data = deaths,dist="weibull")
+gamma.fit <- flexsurvreg(Surv(deaths$min, deaths$murdered)~ episode + factor(house2) + type,  data = deaths,dist="gamma")
+lognorm.fit <- flexsurvreg(Surv(deaths$min, deaths$murdered)~ episode + factor(house2) + type,  data = deaths,dist="lnorm")
+gen.gamma.fit <- flexsurvreg(Surv(deaths$min, deaths$murdered)~ episode + factor(house2) + type,  data = deaths,dist="gengamma")
+loglog.fit <- flexsurvreg(Surv(deaths$min, deaths$murdered)~ episode + factor(house2) + type,  data = deaths,dist="llogis")
+
+par(mfrow = c(3,3))
+plot(exp.fit, conf.int=F, ci=F, mark.time=T, main="Exponential and K-M Curves", xlab="Time (Min)", ylab="Survival Probability")
+legend(30, .9, paste("AIC: ", format(exp.fit$AIC, digits=6)))
+plot(wei.fit, conf.int=F, ci=F, mark.time=T,  main="Weibull and K-M Curves", xlab="Time (Min)", ylab="Survival Probability")
+legend(30, .9, paste("AIC: ", format(wei.fit$AIC, digits=6)))
+plot(gamma.fit, conf.int=F, ci=F, mark.time=T,  main="Gamma and K-M Curves", xlab="Time (Min)", ylab="Survival Probability")
+legend(30, .9, paste("AIC: ", format(gamma.fit$AIC, digits=6)))
+plot(lognorm.fit, conf.int=F, ci=F, mark.time=T, main="Log-Normal and K-M Curves", xlab="Time (Min)", ylab="Survival Probability")
+legend(30, .9, paste("AIC: ", format(lognorm.fit$AIC, digits=6)))
+plot(gen.gamma.fit, conf.int=F, ci=F, mark.time=T, main="Gen. Gamma and K-M Curves", xlab="Time (Min)", ylab="Survival Probability")
+legend(30, .9, paste("AIC: ", format(gen.gamma.fit$AIC, digits=6)))
+plot(loglog.fit, conf.int=F, ci=F, mark.time=T, main="Log-Log and K-M Curves", xlab="Time (Min)", ylab="Survival Probability")
+legend(30, .9, paste("AIC: ", format(loglog.fit$AIC, digits=6)))
+
+#comparing AIC scores
+aic <- as.data.frame(c(exp.fit$AIC, wei.fit$AIC,gamma.fit$AIC,lognorm.fit$AIC,gen.gamma.fit$AIC,loglog.fit$AIC))
+dist <- c("Exponential", "Weibull", "Gamma", "Log Normal", "Gen. Gamma", "Log Log")
+aic <- cbind(aic, dist)
+names(aic)[1] <- "AIC"
+
+(aic.plot <- ggplot(aic, aes(x=factor(reorder(dist, AIC)), y=AIC, fill=dist)) + geom_bar(stat="identity") + theme_hc() + 
+  labs(x="", y="AIC", title="Comparing AIC Scores") + guides(fill=F))
+
+#several parametric fits for deaths w/covariates and their plots and summaries ----
+
+exp.fit <- flexsurvreg(Surv(deaths$min, deaths$murdered)~season + episode + type + factor(house2), data=deaths, dist="exponential")
+wei.fit <- flexsurvreg(Surv(deaths$min, deaths$murdered)~season + episode + type + factor(house2), data=deaths, dist="weibull")
+gamma.fit <- flexsurvreg(Surv(deaths$min, deaths$murdered)~season + episode + type + factor(house2), data=deaths, dist="gamma")
+lognorm.fit <- flexsurvreg(Surv(deaths$min, deaths$murdered)~season + episode + type + factor(house2), data=deaths, dist="lnorm")
+gen.gamma.fit <- flexsurvreg(Surv(deaths$min, deaths$murdered)~season + episode + type + factor(house2), data=deaths, dist="gengamma")
+loglog.fit <- flexsurvreg(Surv(deaths$min, deaths$murdered)~season + episode + type + factor(house2), data=deaths, dist="llogis")
+
+par(mfrow = c(3,3))
+plot(exp.fit, conf.int=F, ci=F, mark.time=T, main="Exponential and K-M Curves", xlab="Time (Min)", ylab="Survival Probability")
+plot(wei.fit, conf.int=F, ci=F, mark.time=T,  main="Weibull and K-M Curves", xlab="Time (Min)", ylab="Survival Probability")
+plot(gamma.fit, conf.int=F, ci=F, mark.time=T,  main="Gamma and K-M Curves", xlab="Time (Min)", ylab="Survival Probability")
+plot(lognorm.fit, conf.int=F, ci=F, mark.time=T, main="Log-Normal and K-M Curves", xlab="Time (Min)", ylab="Survival Probability")
+plot(gen.gamma.fit, conf.int=F, ci=F, mark.time=T, main="Gen. Gamma and K-M Curves", xlab="Time (Min)", ylab="Survival Probability")
+plot(loglog.fit, conf.int=F, ci=F, mark.time=T, main="Log-Log and K-M Curves", xlab="Time (Min)", ylab="Survival Probability")
+
+#comparing AIC scores
+aic <- as.data.frame(c(exp.fit$AIC, wei.fit$AIC,gamma.fit$AIC,lognorm.fit$AIC,gen.gamma.fit$AIC,loglog.fit$AIC))
+dist <- c("Exponential", "Weibull", "Gamma", "Log Normal", "Gen. Gamma", "Log Log")
+aic <- cbind(aic, dist)
+names(aic)[1] <- "AIC"
+
+(aic.plot <- ggplot(aic, aes(x=factor(reorder(dist, AIC)), y=AIC, fill=dist)) + geom_bar(stat="identity") + theme_hc() + 
+  labs(x="", y="AIC", title="Comparing AIC Scores") + guides(fill=F))
+
+#AFT Model ----
+#generalized gamma AFT model based on lowest AIC in previous step, no p-values though
+gengamma.fit1 <- flexsurvreg(Surv(deaths$min, deaths$murdered) ~ episode + type + factor(house2), data=deaths, dist="gengamma")
+gengamma.fit1 
+
+#weibull AFT model
+weibull.fit1 <- flexsurvreg(Surv(deaths$min, deaths$murdered) ~ episode + type + factor(house2), data=deaths, dist="weibull") # + season 
+summary(weibull.fit1)
+
+#model building
+#StepAIC
+stepAIC(weibull.fit1) #only "type" important
+
+#best subsets - need to re-define type and house2 vars from character to number
+deaths$type2 <- 1
+deaths$type2[deaths$type == "Minor"] <- 2
+deaths$type2[deaths$type == "Supporting"] <- 3
+
+deaths$house3 <- 1
+deaths$house3[deaths$house2 == "Night's Watch"] <- 2
+deaths$house3[deaths$house2 == "House Stark"] <- 3
+deaths$house3[deaths$house2 == "House Lannister"] <- 4
+deaths$house3[deaths$house2 == "House Targaryen"] <- 5
+
+IndMatrix <- expand.grid(0:1,0:1,0:1,0:1)
+Covariates <- deaths[,c(2,3,12,13)]
+AICvals <- rep(0,2^4)
+AICvals[1] <- extractAIC(survreg(Surv(deaths$min, deaths$murdered) ~ 1, dist="weibull"))[2]
+
+for(i in 2:2^4){
+  Covs <- Covariates[,which(IndMatrix[i,]==1)]
+  if(is.vector(Covs)==FALSE) Formula <- formula(paste("Surv(deaths$min, deaths$murdered) ~ ", paste(Covs, collapse=" + "))) else Formula <- formula(Surv(deaths$min, deaths$murdered) ~ Covs)
+  AICvals[i] <- extractAIC(survreg(Formula, dist="weibull"))[2]
+}
+
+Covariates[1,which(IndMatrix[which(AICvals==min(AICvals)),]==1)] #no variables selected - best model is intercept only???
+
+#fitting new, reduced model based on StepAIC
+weibull.fit2 <- survreg(Surv(deaths$min, deaths$murdered) ~ type, data=deaths, dist="weibull")
+summary(weibull.fit2)
+
+#adding episode back in to check for interaction episode*type interaction - no good, nothing significant
+deaths$episode.center <- deaths$episode - mean(deaths$episode) #centering season
+weibull.fit2 <- survreg(Surv(deaths$min, deaths$murdered) ~ type + episode.center*type, data=deaths, dist="weibull")
+summary(weibull.fit2)
+
+
+#compare AFT and K-M curves at each level of character type
+
+weibull.fit3 <- flexsurvreg(Surv(deaths$min, deaths$murdered) ~ type, data=deaths, dist="weibull") #same as weibull2 but need to do flexsurv reg in order to plot
+
+km.fit.supporting <-  survfit(Surv(subset(deaths$min, deaths$type == "supporting"), subset(deaths$murdered, deaths$type == "supporting")) ~ 1, conf.type = "log-log", data=deaths)
+km.fit.minor <-  survfit(Surv(subset(deaths$min, deaths$type == "minor"), subset(deaths$murdered, deaths$type == "minor")) ~ 1, conf.type = "log-log", data=deaths)
+km.fit.main <-  survfit(Surv(subset(deaths$min, deaths$type == "main"), subset(deaths$murdered, deaths$type == "main")) ~ 1, conf.type = "log-log", data=deaths)
+
+par(mfrow = c(2,2))
+plot(km.fit.supporting, conf.int=F, main="Comparing AFT and K-M Survival Curves for \n Supporting Characters", ylab="Estimated Survival", xlab="Time (min)", lwd=2)
+lines(weibull.fit3, newdata = data.frame(type = "supporting"), ci=F, col='red', lty=2, type="survival")
+legend(4, .2, c("AFT Surv for Supporting Characters"), lwd = 2, lty=2, col="red")
+
+plot(km.fit.minor, conf.int=F, main="Comparing AFT and K-M Survival Curves for \n Minor Characters", ylab="Estimated Survival", xlab="Time (min)", lwd=2)
+lines(weibull.fit3, newdata = data.frame(type = "minor"), ci=F, col='red', lty=2, type="survival")
+legend(4, .2, c("AFT Surv for Minor Characters"), lwd = 2, lty=2, col="red")
+
+plot(km.fit.main, conf.int=F, main="Comparing AFT and K-M Survival Curves for \n Main Characters", ylab="Estimated Survival", xlab="Time (min)", lwd=2)
+lines(weibull.fit3, newdata = data.frame(type = "main"), ci=F, col='red', lty=2, type="survival")
+legend(4, .2, c("AFT Surv for Main Characters"), lwd = 2, lty=2, col="red")
+
+#search for influential points/outliers for AFT
+
+#dfbetas
+dfb <- residuals(prop.haz.reduced, type="dfbetas")
+eff.samp <- ((141-5) + 141)/2 #effective sample size = 138.5
+
+(intercept <- cbind(deaths[,c(7,9:10)], dfb[,1])[which(dfb[,1] > 2 / sqrt(eff.samp)),])
+(type <- cbind(deaths[,c(7,9:10)], dfb[,2])[which(dfb[,2] > 2 / sqrt(eff.samp)),])
+
+#LDCase
+ld <-  residuals(prop.haz.reduced, type="ldcase")
+cbind(deaths[order(ld, decreasing=T), c(7,9:10)], sort(ld, decreasing = T))[1:2,]
+
+#Cox PH model ----
+prop.haz.full <- coxph(Surv(deaths$min, deaths$murdered) ~ type + episode + factor(house2), data=deaths, ties="breslow")
+summary(prop.haz.full)
+
+prop.haz.reduced <- coxph(Surv(deaths$min, deaths$murdered) ~ type, data=deaths, ties="breslow")
+summary(prop.haz.reduced)
+
+prop.haz.full$loglik[2]
+prop.haz.reduced$loglik[2]
+
+1-pchisq(4.0578, 2) # 2 df
+
+#adding interation term, not significant
+deaths$mean.episode <- deaths$episode - mean(deaths$episode) #centering season
+
+prop.haz.int <- coxph(Surv(deaths$min, deaths$murdered) ~ type + mean.episode*type, data=deaths, ties="breslow")
+summary(prop.haz.int)
+
+
+#checking martingale residuals
+deaths$type2 <- 1
+deaths$type2[deaths$type == "minor"] <- 2
+deaths$type2[deaths$type == "supporting"] <- 3
+
+resid <- cbind(residuals(prop.haz.reduced, type = "martingale"), type)
+names(resid)[1] <- "resids"
+
+resid$type2 <- 1
+resid$type2[resid$type == "minor"] <- 2
+resid$type2[resid$type == "supporting"] <- 3
+
+ggplot(resid, aes(x=type2, y=resids)) + geom_point() + geom_smooth(method = loess, se=F) + labs(x="", y="Martingale Residuals")
+
+```
+
+
+
