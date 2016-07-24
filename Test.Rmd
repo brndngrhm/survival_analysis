@@ -2,7 +2,7 @@
 title: "Test"
 author: "Brendan Graham"
 date: "July 18, 2016"
-output: html_document
+output: word_document
 ---
 
 ```{r setup, include=FALSE}
@@ -249,9 +249,13 @@ lines(final.fit, newdata = data.frame(treatment = 2, celltype = "large", karno =
 legend(300, .8, c("AFT Surv for Trt 2"), lwd = 2, lty=2, col="blue")
 ```
 
-* b) (alternative question since I couln't get SAS to open) Determine the two most influential observations based on the dfbetas and the ldcase methods.  Describe why these individuals may be the most influential and whether it seems like a good idea to refit the model without them in the data set.
+* b) (alternative question since I couln't get SAS to open). To extract the dfbetas and ldcase residuals I refit my best subsets model with a Weibull distribution.
 
-df beta method:
+ * df beta method: I extracted dfbetas for each predictor from my newly fit model and only selected the ones greater than a cutoff of 2/sqrt(131.5), where 131.5 is my effective sample size. The 2 highest dfbetas are in the first output table and are 0.5667349 and 0.3780841.  
+ 
+The observation with dfbeta = 0.5667349 survived a relatively long time (the 4th longest surviver in the study) while having a realtively low karnofsky score (30). It's unusual for someone with a low karnofsky score to survive such a long time, which is likely the reason this observation has a high dfbeta value.  
+ 
+ The observation with dfbeta = 0.3780841 was a realatively old individual at the time of entry to the study at 81 years old. this person was tied for the oldest study participant, and was 10 years older than the next oldest person in the study. This person's age likely contributed to them being a high influential point.
 
 ```{r, echo=T}
 vet <- read.table(file = "https://raw.githubusercontent.com/brndngrhm/survival_analysis/master/Veteran(1).txt", header = T, stringsAsFactors = F)
@@ -269,12 +273,20 @@ eff.samp <- ((137-11) + 137)/2 #effective sample size = 131.5
 (celltype <- cbind(vet[,c(1:5)], dfb[,3])[which(dfb[,3] > 2 / sqrt(eff.samp)),])
 (karno <- cbind(vet[,c(1:5)], dfb[,4])[which(dfb[,4] > 2 / sqrt(eff.samp)),])
 
+```
+
+
+The person with ldcase residual = 0.8502005 is the same person with dfbeta=0.5667349 from the previous part and their long survival with such a low Karnofsky score is likely the reason they show up here again.   
+
+The person with ldcase residual = 0.4766794 also had a realtively low Karnofsky score and survived a long time, much like the person wihg the highest ldcase residual. 
+```{r, echo=T}
 
 #ldcase top 2
 ld <-  residuals(final.fit2, type="ldcase")
 cbind(vet[order(ld, decreasing=T), c(1:5)], sort(ld, decreasing = T))[1:2,]
-
 ```
+
+
 
 
 
